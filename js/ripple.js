@@ -1,246 +1,208 @@
 /**
- * AICE - Award-Winning Water Ripple Effect
- * Premium concentric circles with fluid animation
- * Inspired by Kore.ai's hero section
+ * AICE - Premium Water Ripple Effect
+ * Beautiful concentric ripples with click interaction
  */
 
-class WaterRipple {
-  constructor(canvas) {
-    this.canvas = canvas;
-    this.ctx = canvas.getContext('2d');
-    this.rings = [];
-    this.clickRipples = [];
-    this.time = 0;
-    this.isRunning = false;
-    
-    // Premium configuration
-    this.config = {
-      // Static rings
-      numRings: 12,
-      baseRadius: 50,
-      ringGap: 80,
-      
-      // Ring appearance  
-      ringColor: { r: 59, g: 130, b: 246 },
-      maxOpacity: 0.12,
-      ringWidth: 1.2,
-      
-      // Animation
-      pulseSpeed: 0.004,
-      pulseAmount: 30,
-      
-      // Click ripple
-      clickSpeed: 6,
-      clickFade: 0.008,
-      clickMaxRadius: 800,
-    };
-    
-    this.init();
-  }
+(function() {
+  const canvas = document.getElementById('hero-canvas');
+  if (!canvas) return;
   
-  init() {
-    this.resize();
-    window.addEventListener('resize', () => this.resize());
-    
-    // Track mouse for subtle parallax
-    document.addEventListener('mousemove', (e) => {
-      this.mouseX = e.clientX;
-      this.mouseY = e.clientY;
-    });
-    
-    // Create click ripples
-    this.canvas.addEventListener('click', (e) => {
-      const rect = this.canvas.getBoundingClientRect();
-      this.addClickRipple(e.clientX - rect.left, e.clientY - rect.top);
-    });
-    
-    // Initial ripple on page load
-    setTimeout(() => {
-      this.addClickRipple(this.centerX, this.centerY);
-    }, 500);
-    
-    this.start();
-  }
+  const ctx = canvas.getContext('2d');
+  let width, height, centerX, centerY;
+  let time = 0;
+  let clickRipples = [];
+  let mouseX = 0, mouseY = 0;
   
-  resize() {
+  // Configuration
+  const config = {
+    // Static rings
+    numRings: 10,
+    baseRadius: 60,
+    ringGap: 85,
+    ringColor: { r: 59, g: 130, b: 246 },
+    maxOpacity: 0.1,
+    ringWidth: 1.2,
+    
+    // Animation
+    pulseSpeed: 0.005,
+    pulseAmount: 25,
+  };
+  
+  function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const parent = this.canvas.parentElement;
+    const parent = canvas.parentElement;
     const rect = parent.getBoundingClientRect();
     
-    this.canvas.width = rect.width * dpr;
-    this.canvas.height = rect.height * dpr;
-    this.canvas.style.width = `${rect.width}px`;
-    this.canvas.style.height = `${rect.height}px`;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    canvas.style.width = `${rect.width}px`;
+    canvas.style.height = `${rect.height}px`;
     
-    this.ctx.scale(dpr, dpr);
-    this.width = rect.width;
-    this.height = rect.height;
-    this.centerX = this.width / 2;
-    this.centerY = this.height / 2;
+    ctx.scale(dpr, dpr);
+    width = rect.width;
+    height = rect.height;
+    centerX = width / 2;
+    centerY = height / 2;
   }
   
-  addClickRipple(x, y) {
-    // Create multiple rings for each click
-    for (let i = 0; i < 4; i++) {
-      this.clickRipples.push({
+  function addClickRipple(x, y) {
+    // Create multiple rings for premium effect
+    for (let i = 0; i < 3; i++) {
+      clickRipples.push({
         x: x,
         y: y,
-        radius: i * 25,
-        opacity: 0.35 - i * 0.08,
-        speed: this.config.clickSpeed - i * 0.8,
-        width: 2.5 - i * 0.4,
+        radius: i * 20,
+        opacity: 0.4 - i * 0.1,
+        speed: 5 - i * 0.8,
+        lineWidth: 2.5 - i * 0.5,
       });
     }
   }
   
-  draw() {
-    // Clear canvas
-    this.ctx.clearRect(0, 0, this.width, this.height);
-    
-    // Draw premium radial gradient background
-    this.drawBackground();
-    
-    // Draw static concentric rings with pulse animation
-    this.drawRings();
-    
-    // Draw click ripples
-    this.drawClickRipples();
-    
-    this.time++;
-  }
-  
-  drawBackground() {
-    // Beautiful radial gradient like Kore.ai
-    const gradient = this.ctx.createRadialGradient(
-      this.centerX, this.centerY, 0,
-      this.centerX, this.centerY, Math.max(this.width, this.height) * 0.85
+  function drawBackground() {
+    const gradient = ctx.createRadialGradient(
+      centerX, centerY, 0,
+      centerX, centerY, Math.max(width, height) * 0.85
     );
+    gradient.addColorStop(0, '#E8F4FD');
+    gradient.addColorStop(0.3, '#EEF7FF');
+    gradient.addColorStop(0.6, '#F5FAFF');
+    gradient.addColorStop(1, '#FAFCFF');
     
-    // Very soft blue gradient
-    gradient.addColorStop(0, '#E8F4FD');    // Light blue center
-    gradient.addColorStop(0.25, '#EEF7FF');
-    gradient.addColorStop(0.5, '#F4FAFF');  // Fade to off-white
-    gradient.addColorStop(0.75, '#F9FCFF');
-    gradient.addColorStop(1, '#FEFEFE');    // Almost white edges
-    
-    this.ctx.fillStyle = gradient;
-    this.ctx.fillRect(0, 0, this.width, this.height);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
   }
   
-  drawRings() {
-    const { numRings, baseRadius, ringGap, ringColor, maxOpacity, ringWidth, pulseSpeed, pulseAmount } = this.config;
+  function drawStaticRings() {
+    const { numRings, baseRadius, ringGap, ringColor, maxOpacity, ringWidth, pulseSpeed, pulseAmount } = config;
     
-    // Gentle breathing animation
-    const breath = Math.sin(this.time * pulseSpeed) * pulseAmount;
+    // Breathing animation
+    const breath = Math.sin(time * pulseSpeed) * pulseAmount;
     
-    // Slight center offset based on mouse position for depth effect
-    let offsetX = 0, offsetY = 0;
-    if (this.mouseX !== undefined) {
-      offsetX = (this.mouseX - this.centerX) * 0.015;
-      offsetY = (this.mouseY - this.centerY) * 0.015;
-    }
-    
-    const cx = this.centerX + offsetX;
-    const cy = this.centerY + offsetY;
+    // Subtle parallax
+    const offsetX = (mouseX - centerX) * 0.012;
+    const offsetY = (mouseY - centerY) * 0.012;
+    const cx = centerX + offsetX;
+    const cy = centerY + offsetY;
     
     for (let i = 0; i < numRings; i++) {
-      // Each ring has a slightly different phase for a wave effect
-      const phase = i * 0.25;
-      const ringBreath = Math.sin(this.time * pulseSpeed + phase) * pulseAmount * (1 - i * 0.05);
+      const phase = i * 0.2;
+      const ringBreath = Math.sin(time * pulseSpeed + phase) * pulseAmount * (1 - i * 0.06);
+      const radius = baseRadius + (i * ringGap) + ringBreath;
+      const opacity = maxOpacity * Math.max(0, 1 - (i / numRings) * 0.75);
       
-      const radius = baseRadius + (i * ringGap) + ringBreath + breath * 0.3;
-      
-      // Fade opacity based on distance from center
-      const opacity = maxOpacity * Math.max(0, 1 - (i / numRings) * 0.7);
-      
-      if (opacity <= 0) continue;
+      if (opacity <= 0 || radius > Math.max(width, height)) continue;
       
       // Main ring
-      this.ctx.beginPath();
-      this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-      this.ctx.strokeStyle = `rgba(${ringColor.r}, ${ringColor.g}, ${ringColor.b}, ${opacity})`;
-      this.ctx.lineWidth = ringWidth;
-      this.ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(${ringColor.r}, ${ringColor.g}, ${ringColor.b}, ${opacity})`;
+      ctx.lineWidth = ringWidth;
+      ctx.stroke();
       
-      // Soft glow around rings (only for first 6 rings)
-      if (i < 6) {
-        const glowGradient = this.ctx.createRadialGradient(
-          cx, cy, radius - 25,
-          cx, cy, radius + 25
-        );
+      // Soft glow for inner rings
+      if (i < 5) {
+        const glowGradient = ctx.createRadialGradient(cx, cy, radius - 20, cx, cy, radius + 20);
         glowGradient.addColorStop(0, `rgba(${ringColor.r}, ${ringColor.g}, ${ringColor.b}, 0)`);
-        glowGradient.addColorStop(0.5, `rgba(${ringColor.r}, ${ringColor.g}, ${ringColor.b}, ${opacity * 0.25})`);
+        glowGradient.addColorStop(0.5, `rgba(${ringColor.r}, ${ringColor.g}, ${ringColor.b}, ${opacity * 0.2})`);
         glowGradient.addColorStop(1, `rgba(${ringColor.r}, ${ringColor.g}, ${ringColor.b}, 0)`);
         
-        this.ctx.beginPath();
-        this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-        this.ctx.strokeStyle = glowGradient;
-        this.ctx.lineWidth = 50;
-        this.ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = glowGradient;
+        ctx.lineWidth = 40;
+        ctx.stroke();
       }
     }
   }
   
-  drawClickRipples() {
-    const { ringColor, clickMaxRadius, clickFade } = this.config;
+  function drawClickRipples() {
+    const { ringColor } = config;
     
-    this.clickRipples = this.clickRipples.filter(ripple => {
+    clickRipples = clickRipples.filter(ripple => {
       ripple.radius += ripple.speed;
-      ripple.opacity -= clickFade;
+      ripple.opacity -= 0.006;
       
-      if (ripple.opacity <= 0 || ripple.radius >= clickMaxRadius) {
-        return false;
-      }
+      if (ripple.opacity <= 0 || ripple.radius > 700) return false;
       
       // Main ring
-      this.ctx.beginPath();
-      this.ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
-      this.ctx.strokeStyle = `rgba(${ringColor.r}, ${ringColor.g}, ${ringColor.b}, ${ripple.opacity})`;
-      this.ctx.lineWidth = ripple.width;
-      this.ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(${ringColor.r}, ${ringColor.g}, ${ringColor.b}, ${ripple.opacity})`;
+      ctx.lineWidth = ripple.lineWidth;
+      ctx.stroke();
       
-      // Glow effect
-      const glow = this.ctx.createRadialGradient(
-        ripple.x, ripple.y, ripple.radius - 20,
-        ripple.x, ripple.y, ripple.radius + 20
+      // Glow
+      const glow = ctx.createRadialGradient(
+        ripple.x, ripple.y, ripple.radius - 15,
+        ripple.x, ripple.y, ripple.radius + 15
       );
       glow.addColorStop(0, `rgba(${ringColor.r}, ${ringColor.g}, ${ringColor.b}, 0)`);
-      glow.addColorStop(0.5, `rgba(${ringColor.r}, ${ringColor.g}, ${ringColor.b}, ${ripple.opacity * 0.25})`);
+      glow.addColorStop(0.5, `rgba(${ringColor.r}, ${ringColor.g}, ${ringColor.b}, ${ripple.opacity * 0.2})`);
       glow.addColorStop(1, `rgba(${ringColor.r}, ${ringColor.g}, ${ringColor.b}, 0)`);
       
-      this.ctx.beginPath();
-      this.ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
-      this.ctx.strokeStyle = glow;
-      this.ctx.lineWidth = 40;
-      this.ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
+      ctx.strokeStyle = glow;
+      ctx.lineWidth = 30;
+      ctx.stroke();
       
       return true;
     });
   }
   
-  animate() {
-    this.draw();
-    if (this.isRunning) {
-      requestAnimationFrame(() => this.animate());
-    }
+  function draw() {
+    ctx.clearRect(0, 0, width, height);
+    drawBackground();
+    drawStaticRings();
+    drawClickRipples();
+    time++;
+    requestAnimationFrame(draw);
   }
   
-  start() {
-    if (!this.isRunning) {
-      this.isRunning = true;
-      this.animate();
-    }
+  // Initialize
+  function init() {
+    resize();
+    
+    // Resize handler
+    window.addEventListener('resize', resize);
+    
+    // Mouse move for parallax
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+    
+    // Click handler for ripples
+    canvas.addEventListener('click', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      addClickRipple(x, y);
+    });
+    
+    // Also trigger on touch
+    canvas.addEventListener('touchstart', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const touch = e.touches[0];
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      addClickRipple(x, y);
+    });
+    
+    // Initial ripple from center on page load
+    setTimeout(() => {
+      addClickRipple(centerX, centerY);
+    }, 600);
+    
+    // Start animation
+    draw();
   }
   
-  stop() {
-    this.isRunning = false;
+  // Wait for DOM
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
   }
-}
-
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-  const canvas = document.getElementById('hero-canvas');
-  if (canvas) {
-    window.waterRipple = new WaterRipple(canvas);
-  }
-});
+})();

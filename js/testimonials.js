@@ -1,76 +1,94 @@
 /**
- * AICE - Testimonials Carousel Controller
- * Auto-scrolling carousel with pause on hover
+ * AICE - Testimonials Carousel with Arrow Navigation
  */
 
 class TestimonialsCarousel {
   constructor() {
-    this.carousel = document.querySelector('.testimonials-carousel');
     this.track = document.querySelector('.testimonials-track');
-    this.dots = document.querySelectorAll('.testimonial-dot');
     this.cards = document.querySelectorAll('.testimonial-card');
+    this.dots = document.querySelectorAll('.testimonial-dot');
+    this.prevBtn = document.getElementById('testimonialPrev');
+    this.nextBtn = document.getElementById('testimonialNext');
     
-    if (!this.carousel || !this.track) return;
+    if (!this.track || !this.cards.length) return;
+    
+    this.currentIndex = 0;
+    this.cardsPerView = this.getCardsPerView();
+    this.maxIndex = Math.max(0, this.cards.length - this.cardsPerView);
     
     this.init();
   }
   
   init() {
-    // Clone cards for infinite scroll
-    this.setupInfiniteScroll();
+    // Arrow buttons
+    this.prevBtn?.addEventListener('click', () => this.prev());
+    this.nextBtn?.addEventListener('click', () => this.next());
     
-    // Setup dot navigation if present
-    if (this.dots.length) {
-      this.setupDotNavigation();
+    // Dot navigation
+    this.dots.forEach((dot, index) => {
+      dot.addEventListener('click', () => this.goTo(index));
+    });
+    
+    // Handle resize
+    window.addEventListener('resize', () => {
+      this.cardsPerView = this.getCardsPerView();
+      this.maxIndex = Math.max(0, this.cards.length - this.cardsPerView);
+      this.goTo(Math.min(this.currentIndex, this.maxIndex));
+    });
+    
+    // Initial state
+    this.updateButtons();
+  }
+  
+  getCardsPerView() {
+    if (window.innerWidth < 768) return 1;
+    if (window.innerWidth < 1024) return 2;
+    return 3;
+  }
+  
+  prev() {
+    if (this.currentIndex > 0) {
+      this.goTo(this.currentIndex - 1);
     }
   }
   
-  setupInfiniteScroll() {
-    // Clone all cards and append to track
-    const cards = this.track.querySelectorAll('.testimonial-card');
-    cards.forEach(card => {
-      const clone = card.cloneNode(true);
-      this.track.appendChild(clone);
-    });
+  next() {
+    if (this.currentIndex < this.maxIndex) {
+      this.goTo(this.currentIndex + 1);
+    }
   }
   
-  setupDotNavigation() {
-    this.dots.forEach((dot, index) => {
-      dot.addEventListener('click', () => {
-        this.goToSlide(index);
-      });
-    });
-  }
-  
-  goToSlide(index) {
-    // Update dots
-    this.dots.forEach((dot, i) => {
-      dot.classList.toggle('active', i === index);
-    });
+  goTo(index) {
+    this.currentIndex = Math.max(0, Math.min(index, this.maxIndex));
     
-    // Pause animation and scroll to position
-    this.track.style.animationPlayState = 'paused';
-    
-    const cardWidth = this.cards[0]?.offsetWidth || 400;
-    const gap = 24; // spacing-6
-    const offset = index * (cardWidth + gap);
+    // Calculate offset
+    const cardWidth = this.cards[0].offsetWidth;
+    const gap = 24; // Match CSS gap
+    const offset = this.currentIndex * (cardWidth + gap);
     
     this.track.style.transform = `translateX(-${offset}px)`;
     
-    // Resume animation after a delay
-    setTimeout(() => {
-      this.track.style.transform = '';
-      this.track.style.animationPlayState = 'running';
-    }, 3000);
+    this.updateDots();
+    this.updateButtons();
+  }
+  
+  updateDots() {
+    this.dots.forEach((dot, index) => {
+      dot.classList.toggle('active', index === this.currentIndex);
+    });
+  }
+  
+  updateButtons() {
+    if (this.prevBtn) {
+      this.prevBtn.disabled = this.currentIndex === 0;
+    }
+    if (this.nextBtn) {
+      this.nextBtn.disabled = this.currentIndex >= this.maxIndex;
+    }
   }
 }
 
-// Initialize when DOM is ready
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
-  window.testimonialsCarousel = new TestimonialsCarousel();
+  window.testimonials = new TestimonialsCarousel();
 });
-
-// Export for module usage
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = TestimonialsCarousel;
-}
