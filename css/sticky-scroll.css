@@ -1,0 +1,219 @@
+/* Sticky Scroll Section - What AICE Can Do */
+
+.sticky-scroll-section {
+    position: relative;
+    background: var(--color-off-white);
+    min-height: 100vh;
+}
+
+.sticky-scroll-container {
+    display: flex;
+    max-width: var(--container-xl);
+    margin: 0 auto;
+    padding: 0 var(--spacing-6);
+}
+
+/* Left Panel - Sticky Navigation */
+.sticky-scroll-nav {
+    position: sticky;
+    top: 100px;
+    width: 450px;
+    height: calc(100vh - 200px);
+    padding: var(--spacing-8) var(--spacing-6);
+    flex-shrink: 0;
+    align-self: flex-start;
+}
+
+.sticky-scroll-title {
+    font-size: var(--text-3xl);
+    font-weight: var(--font-normal);
+    color: var(--color-black);
+    margin-bottom: var(--spacing-10);
+    line-height: var(--leading-tight);
+}
+
+.sticky-scroll-items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+}
+
+.sticky-scroll-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-4) var(--spacing-5);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    border-left: 3px solid transparent;
+    background: transparent;
+}
+
+.sticky-scroll-item:hover {
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.sticky-scroll-item.active {
+    background: var(--color-accent-blue);
+    color: var(--color-white);
+    border-left-color: var(--color-dark-blue);
+}
+
+.sticky-scroll-item-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: var(--color-gray-100);
+    border-radius: var(--radius-md);
+    color: var(--color-accent-blue);
+    transition: all var(--transition-base);
+    flex-shrink: 0;
+}
+
+.sticky-scroll-item.active .sticky-scroll-item-icon {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-white);
+}
+
+.sticky-scroll-item-text {
+    font-size: var(--text-base);
+    font-weight: var(--font-medium);
+    color: var(--color-gray-700);
+    transition: color var(--transition-base);
+}
+
+.sticky-scroll-item.active .sticky-scroll-item-text {
+    color: var(--color-white);
+}
+
+.sticky-scroll-item-arrow {
+    margin-left: auto;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: all var(--transition-base);
+}
+
+.sticky-scroll-item.active .sticky-scroll-item-arrow {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Right Panel - Content */
+.sticky-scroll-content {
+    flex: 1;
+    padding: var(--spacing-8);
+    min-height: 200vh;
+    /* Make it tall enough to scroll through all items */
+}
+
+.sticky-scroll-panels {
+    position: relative;
+}
+
+/* Each panel takes up viewport height for scroll detection */
+.sticky-scroll-panel {
+    min-height: 80vh;
+    padding: var(--spacing-8) 0;
+    opacity: 0.4;
+    transform: translateY(20px);
+    transition: all 0.5s ease;
+}
+
+.sticky-scroll-panel.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.sticky-scroll-panel-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-6);
+    position: sticky;
+    top: 150px;
+}
+
+.sticky-scroll-panel-title {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-semibold);
+    color: var(--color-black);
+}
+
+.sticky-scroll-panel-desc {
+    font-size: var(--text-lg);
+    color: var(--color-gray-600);
+    line-height: var(--leading-relaxed);
+    max-width: 500px;
+}
+
+/* Animation Container for Right Side */
+.sticky-scroll-animation {
+    width: 100%;
+    height: 350px;
+    background: var(--color-white);
+    border-radius: var(--radius-2xl);
+    border: 1px solid var(--color-gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    margin-top: var(--spacing-6);
+}
+
+.sticky-scroll-animation-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-4);
+    color: var(--color-gray-400);
+}
+
+.sticky-scroll-animation-placeholder svg {
+    width: 64px;
+    height: 64px;
+    color: var(--color-accent-blue);
+    opacity: 0.5;
+}
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+    .sticky-scroll-container {
+        flex-direction: column;
+    }
+
+    .sticky-scroll-nav {
+        position: relative;
+        top: 0;
+        width: 100%;
+        height: auto;
+        padding: var(--spacing-12) var(--spacing-6);
+    }
+
+    .sticky-scroll-content {
+        min-height: auto;
+    }
+
+    .sticky-scroll-panel {
+        min-height: auto;
+        padding: var(--spacing-6) 0;
+    }
+
+    .sticky-scroll-panel-content {
+        position: relative;
+        top: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .sticky-scroll-title {
+        font-size: var(--text-2xl);
+        margin-bottom: var(--spacing-6);
+    }
+
+    .sticky-scroll-animation {
+        height: 250px;
+    }
+}

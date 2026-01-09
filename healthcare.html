@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="AI Solutions for Healthcare - Patient support, medical tourism coordination, and intelligent scheduling.">
+    <title>AI for Healthcare | AICE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/navbar.css">
+    <link rel="stylesheet" href="css/footer.css">
+    <link rel="stylesheet" href="css/modal.css">
+    <style>
+        .vertical-hero {
+            padding: 180px 0 100px;
+            text-align: center;
+            background: linear-gradient(135deg, #E8F4FD 0%, #FFFFFF 100%);
+        }
+
+        .vertical-hero h1 {
+            font-size: var(--text-5xl);
+            margin-bottom: var(--spacing-4);
+        }
+
+        .vertical-hero p {
+            font-size: var(--text-lg);
+            color: var(--color-gray-600);
+            max-width: 600px;
+            margin: 0 auto var(--spacing-8);
+        }
+
+        .coming-soon {
+            padding: var(--spacing-24);
+            text-align: center;
+        }
+
+        .coming-soon-badge {
+            display: inline-block;
+            padding: var(--spacing-3) var(--spacing-6);
+            background: var(--color-light-blue);
+            color: var(--color-accent-blue);
+            border-radius: var(--radius-full);
+            font-weight: var(--font-medium);
+            margin-bottom: var(--spacing-6);
+        }
+
+        .coming-soon h2 {
+            font-size: var(--text-2xl);
+            margin-bottom: var(--spacing-4);
+        }
+
+        .coming-soon p {
+            color: var(--color-gray-500);
+            margin-bottom: var(--spacing-8);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="index.html" class="navbar-logo">AICE</a>
+            <ul class="navbar-nav">
+                <li class="nav-item"><a href="index.html#what-we-do" class="nav-link">AI Solutions</a></li>
+                <li class="nav-item"><a href="founders.html" class="nav-link">Meet the Founders</a></li>
+            </ul>
+            <div class="navbar-actions">
+                <button class="btn btn-primary" data-open-modal="demo">Book a Demo</button>
+            </div>
+        </div>
+    </nav>
+
+    <section class="vertical-hero">
+        <div class="container">
+            <h1>AI for Healthcare</h1>
+            <p>Revolutionize patient care with AI-powered support systems, medical tourism coordination, and intelligent
+                appointment scheduling.</p>
+            <button class="btn btn-primary btn-lg" data-open-modal="demo">Get Started</button>
+        </div>
+    </section>
+
+    <section class="coming-soon">
+        <span class="coming-soon-badge">Coming Soon</span>
+        <h2>Interactive Demo</h2>
+        <p>Experience how our AI handles patient inquiries and coordinates medical tourism seamlessly.</p>
+        <a href="index.html" class="btn btn-secondary">Back to Home</a>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-bottom">
+                <p class="footer-copyright">© 2026 AICE. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="modal-overlay"></div>
+    <div class="modal">
+        <div class="modal-header">
+            <h2 class="modal-title">Book a Demo</h2>
+            <button class="modal-close"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg></button>
+        </div>
+        <div class="modal-body">
+            <form id="demo-form">
+                <div class="form-group"><label class="form-label">Full Name <span>*</span></label><input type="text"
+                        class="form-input" required></div>
+                <div class="form-group"><label class="form-label">Email <span>*</span></label><input type="email"
+                        class="form-input" required></div>
+                <div class="form-group"><label class="form-label">Company <span>*</span></label><input type="text"
+                        class="form-input" required></div>
+                <button type="submit" class="btn btn-primary form-submit">Request Demo</button>
+            </form>
+        </div>
+    </div>
+    <script src="js/navbar.js"></script>
+    <script src="js/modal.js"></script>
+</body>
+
+</html>

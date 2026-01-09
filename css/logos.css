@@ -1,0 +1,124 @@
+/* Customer Logos Section */
+
+.logos-section {
+    padding: var(--spacing-16) 0;
+    background: var(--color-off-white);
+    overflow: hidden;
+}
+
+.logos-container {
+    max-width: var(--container-xl);
+    margin: 0 auto;
+    padding: 0 var(--spacing-6);
+}
+
+.logos-header {
+    text-align: center;
+    margin-bottom: var(--spacing-12);
+}
+
+.logos-label {
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--color-gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* Marquee Animation Container */
+.logos-marquee {
+    position: relative;
+    display: flex;
+    overflow: hidden;
+    user-select: none;
+    gap: var(--spacing-8);
+    mask-image: linear-gradient(to right,
+            transparent 0%,
+            black 10%,
+            black 90%,
+            transparent 100%);
+    -webkit-mask-image: linear-gradient(to right,
+            transparent 0%,
+            black 10%,
+            black 90%,
+            transparent 100%);
+}
+
+.logos-track {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-12);
+    animation: scroll-left 40s linear infinite;
+    flex-shrink: 0;
+}
+
+.logos-marquee:hover .logos-track {
+    animation-play-state: paused;
+}
+
+@keyframes scroll-left {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(calc(-100% - var(--spacing-12)));
+    }
+}
+
+/* Individual Logo */
+.logo-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 160px;
+    height: 60px;
+    padding: var(--spacing-4) var(--spacing-6);
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-gray-100);
+    transition: all var(--transition-base);
+}
+
+.logo-item:hover {
+    box-shadow: var(--shadow-md);
+    transform: scale(1.02);
+}
+
+.logo-item img {
+    max-width: 120px;
+    max-height: 40px;
+    object-fit: contain;
+    filter: grayscale(100%);
+    opacity: 0.7;
+    transition: all var(--transition-base);
+}
+
+.logo-item:hover img {
+    filter: grayscale(0%);
+    opacity: 1;
+}
+
+/* Placeholder Logo (when no image) */
+.logo-placeholder {
+    font-size: var(--text-lg);
+    font-weight: var(--font-bold);
+    color: var(--color-gray-400);
+    letter-spacing: -0.02em;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .logos-section {
+        padding: var(--spacing-12) 0;
+    }
+
+    .logos-track {
+        gap: var(--spacing-8);
+    }
+
+    .logo-item {
+        min-width: 140px;
+        padding: var(--spacing-3) var(--spacing-4);
+    }
+}
