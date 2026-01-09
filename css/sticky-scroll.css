@@ -1,88 +1,96 @@
-/* Sticky Scroll Section - What AICE Can Do */
+/* Sticky Scroll Section - Fixed Left Nav, Scrolling Right Content */
+/* Mistral.ai style implementation */
 
 .sticky-scroll-section {
     position: relative;
-    background: var(--color-off-white);
-    min-height: 100vh;
+    background: transparent;
+    padding: 0;
 }
 
 .sticky-scroll-container {
     display: flex;
     max-width: var(--container-xl);
     margin: 0 auto;
-    padding: 0 var(--spacing-6);
+    min-height: 100vh;
 }
 
-/* Left Panel - Sticky Navigation */
+/* Left Panel - FIXED Position */
 .sticky-scroll-nav {
     position: sticky;
     top: 100px;
-    width: 450px;
-    height: calc(100vh - 200px);
-    padding: var(--spacing-8) var(--spacing-6);
+    width: 380px;
+    height: fit-content;
+    padding: var(--spacing-16) var(--spacing-8) var(--spacing-16) var(--spacing-6);
     flex-shrink: 0;
     align-self: flex-start;
 }
 
 .sticky-scroll-title {
-    font-size: var(--text-3xl);
-    font-weight: var(--font-normal);
-    color: var(--color-black);
-    margin-bottom: var(--spacing-10);
-    line-height: var(--leading-tight);
+    font-size: clamp(28px, 3vw, 36px);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    color: var(--color-text);
+    margin-bottom: var(--spacing-8);
+    line-height: 1.15;
 }
 
 .sticky-scroll-items {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-1);
+    gap: 4px;
 }
 
 .sticky-scroll-item {
     display: flex;
     align-items: center;
     gap: var(--spacing-3);
-    padding: var(--spacing-4) var(--spacing-5);
-    border-radius: var(--radius-lg);
+    padding: 14px 18px;
+    border-radius: 12px;
     cursor: pointer;
-    transition: all var(--transition-base);
-    border-left: 3px solid transparent;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     background: transparent;
+    border: 1px solid transparent;
 }
 
 .sticky-scroll-item:hover {
-    background: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.8);
+    border-color: var(--color-gray-100);
 }
 
 .sticky-scroll-item.active {
-    background: var(--color-accent-blue);
-    color: var(--color-white);
-    border-left-color: var(--color-dark-blue);
+    background: var(--color-black);
+    border-color: var(--color-black);
 }
 
 .sticky-scroll-item-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
     background: var(--color-gray-100);
-    border-radius: var(--radius-md);
+    border-radius: 10px;
     color: var(--color-accent-blue);
-    transition: all var(--transition-base);
+    transition: all 0.25s ease;
     flex-shrink: 0;
 }
 
 .sticky-scroll-item.active .sticky-scroll-item-icon {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
     color: var(--color-white);
 }
 
+.sticky-scroll-item-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
 .sticky-scroll-item-text {
-    font-size: var(--text-base);
-    font-weight: var(--font-medium);
-    color: var(--color-gray-700);
-    transition: color var(--transition-base);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text);
+    transition: color 0.25s ease;
+    letter-spacing: -0.01em;
 }
 
 .sticky-scroll-item.active .sticky-scroll-item-text {
@@ -92,8 +100,11 @@
 .sticky-scroll-item-arrow {
     margin-left: auto;
     opacity: 0;
-    transform: translateX(-10px);
-    transition: all var(--transition-base);
+    transform: translateX(-8px);
+    transition: all 0.25s ease;
+    color: var(--color-white);
+    width: 16px;
+    height: 16px;
 }
 
 .sticky-scroll-item.active .sticky-scroll-item-arrow {
@@ -101,25 +112,23 @@
     transform: translateX(0);
 }
 
-/* Right Panel - Content */
+/* Right Panel - Scrolling Content */
 .sticky-scroll-content {
     flex: 1;
-    padding: var(--spacing-8);
-    min-height: 200vh;
-    /* Make it tall enough to scroll through all items */
+    padding: var(--spacing-16) var(--spacing-8);
 }
 
 .sticky-scroll-panels {
-    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
-/* Each panel takes up viewport height for scroll detection */
 .sticky-scroll-panel {
-    min-height: 80vh;
     padding: var(--spacing-8) 0;
-    opacity: 0.4;
+    min-height: 500px;
+    opacity: 0.3;
     transform: translateY(20px);
-    transition: all 0.5s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sticky-scroll-panel.active {
@@ -128,57 +137,626 @@
 }
 
 .sticky-scroll-panel-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-6);
-    position: sticky;
-    top: 150px;
+    margin-bottom: var(--spacing-6);
 }
 
 .sticky-scroll-panel-title {
-    font-size: var(--text-2xl);
-    font-weight: var(--font-semibold);
-    color: var(--color-black);
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--color-text);
+    margin-bottom: var(--spacing-3);
 }
 
 .sticky-scroll-panel-desc {
-    font-size: var(--text-lg);
+    font-size: 15px;
     color: var(--color-gray-600);
-    line-height: var(--leading-relaxed);
-    max-width: 500px;
+    line-height: 1.65;
+    max-width: 480px;
 }
 
-/* Animation Container for Right Side */
+/* Animation Container - Premium styling */
 .sticky-scroll-animation {
     width: 100%;
-    height: 350px;
-    background: var(--color-white);
-    border-radius: var(--radius-2xl);
-    border: 1px solid var(--color-gray-100);
+    height: 420px;
+    background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 20px;
+    border: 1px solid rgba(0, 0, 0, 0.04);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    box-shadow: var(--shadow-lg);
-    margin-top: var(--spacing-6);
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.03),
+        0 10px 20px -2px rgba(0, 0, 0, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
-.sticky-scroll-animation-placeholder {
+/* Animated Illustrations */
+.anim-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    position: relative;
+}
+
+/* Phone Call Animation - Premium design */
+.anim-phone {
+    position: relative;
+    width: 180px;
+    height: 360px;
+}
+
+.anim-phone-device {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
+    border-radius: 32px;
+    padding: 8px;
+    box-shadow:
+        0 25px 50px -12px rgba(0, 0, 0, 0.25),
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+.anim-phone-screen {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, #1e1e3f 0%, #12122b 100%);
+    border-radius: 26px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--spacing-4);
-    color: var(--color-gray-400);
+    justify-content: center;
+    padding: 24px;
 }
 
-.sticky-scroll-animation-placeholder svg {
-    width: 64px;
-    height: 64px;
+.anim-phone-avatar {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    animation: pulse-glow 2s ease-in-out infinite;
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.4);
+}
+
+@keyframes pulse-glow {
+
+    0%,
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 40px rgba(59, 130, 246, 0.4);
+    }
+
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 60px rgba(59, 130, 246, 0.6);
+    }
+}
+
+.anim-phone-avatar svg {
+    width: 36px;
+    height: 36px;
+    color: white;
+}
+
+.anim-phone-name {
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+}
+
+.anim-phone-status {
+    color: #4ade80;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.anim-phone-status::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: #4ade80;
+    border-radius: 50%;
+    animation: blink 1.5s ease-in-out infinite;
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
+}
+
+.anim-phone-wave {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200px;
+    height: 200px;
+    border: 2px solid rgba(59, 130, 246, 0.2);
+    border-radius: 50%;
+    animation: wave-out 2.5s ease-out infinite;
+    pointer-events: none;
+}
+
+.anim-phone-wave:nth-child(2) {
+    animation-delay: 0.8s;
+}
+
+.anim-phone-wave:nth-child(3) {
+    animation-delay: 1.6s;
+}
+
+@keyframes wave-out {
+    0% {
+        transform: translate(-50%, -50%) scale(0.4);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(2);
+        opacity: 0;
+    }
+}
+
+/* Lead Cards Animation */
+.anim-leads {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 320px;
+}
+
+.anim-lead-card {
+    background: white;
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    animation: card-slide-in 0.6s ease forwards;
+    opacity: 0;
+    transform: translateX(-30px);
+}
+
+.anim-lead-card:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.anim-lead-card:nth-child(2) {
+    animation-delay: 0.25s;
+}
+
+.anim-lead-card:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes card-slide-in {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.anim-lead-avatar {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    color: #4f46e5;
+}
+
+.anim-lead-info {
+    flex: 1;
+}
+
+.anim-lead-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-text);
+    letter-spacing: -0.01em;
+}
+
+.anim-lead-company {
+    font-size: 13px;
+    color: var(--color-gray-500);
+    margin-top: 2px;
+}
+
+.anim-lead-score {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.anim-lead-score.high {
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+    color: #15803d;
+}
+
+.anim-lead-score.medium {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #b45309;
+}
+
+.anim-lead-score.low {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #dc2626;
+}
+
+/* Document Processing Animation */
+.anim-docs {
+    display: flex;
+    align-items: center;
+    gap: 50px;
+}
+
+.anim-doc-stack {
+    position: relative;
+    width: 110px;
+    height: 140px;
+}
+
+.anim-doc {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.anim-doc:nth-child(1) {
+    transform: rotate(-6deg);
+    z-index: 3;
+    animation: doc-float 3s ease-in-out infinite;
+}
+
+.anim-doc:nth-child(2) {
+    transform: rotate(3deg) translateY(10px);
+    z-index: 2;
+    animation: doc-float 3s ease-in-out 0.3s infinite;
+}
+
+.anim-doc:nth-child(3) {
+    transform: rotate(-2deg) translateY(20px);
+    z-index: 1;
+    animation: doc-float 3s ease-in-out 0.6s infinite;
+}
+
+@keyframes doc-float {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(var(--rot, -6deg));
+    }
+
+    50% {
+        transform: translateY(-8px) rotate(var(--rot, -6deg));
+    }
+}
+
+.anim-doc-line {
+    height: 8px;
+    background: linear-gradient(90deg, #e2e8f0 0%, #cbd5e1 100%);
+    border-radius: 4px;
+}
+
+.anim-doc-line:nth-child(1) {
+    width: 75%;
+}
+
+.anim-doc-line:nth-child(2) {
+    width: 100%;
+}
+
+.anim-doc-line:nth-child(3) {
+    width: 55%;
+}
+
+.anim-arrow {
     color: var(--color-accent-blue);
-    opacity: 0.5;
+    animation: arrow-pulse 1.8s ease-in-out infinite;
 }
 
-/* Responsive Styles */
+@keyframes arrow-pulse {
+
+    0%,
+    100% {
+        transform: translateX(0);
+        opacity: 0.5;
+    }
+
+    50% {
+        transform: translateX(12px);
+        opacity: 1;
+    }
+}
+
+.anim-result {
+    width: 130px;
+    height: 90px;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+    animation: result-pop 2.5s ease-in-out infinite;
+}
+
+@keyframes result-pop {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.anim-result svg {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 6px;
+}
+
+.anim-result span {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Chat Animation */
+.anim-chat {
+    width: 320px;
+}
+
+.anim-chat-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.anim-chat-msg {
+    max-width: 85%;
+    padding: 14px 18px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.5;
+    animation: msg-pop 0.5s ease forwards;
+    opacity: 0;
+    transform: translateY(15px) scale(0.95);
+}
+
+.anim-chat-msg:nth-child(1) {
+    animation-delay: 0.2s;
+}
+
+.anim-chat-msg:nth-child(2) {
+    animation-delay: 1s;
+}
+
+.anim-chat-msg:nth-child(3) {
+    animation-delay: 1.8s;
+}
+
+@keyframes msg-pop {
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.anim-chat-msg.user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, #0f0f10 0%, #1a1a1b 100%);
+    color: white;
+    border-bottom-right-radius: 6px;
+}
+
+.anim-chat-msg.bot {
+    align-self: flex-start;
+    background: white;
+    color: var(--color-text);
+    border-bottom-left-radius: 6px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.anim-chat-typing {
+    display: flex;
+    gap: 5px;
+    padding: 14px 20px;
+    background: white;
+    border-radius: 18px;
+    border-bottom-left-radius: 6px;
+    width: fit-content;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    margin-top: 14px;
+    animation: msg-pop 0.5s ease 2.6s forwards;
+    opacity: 0;
+}
+
+.anim-chat-typing span {
+    width: 8px;
+    height: 8px;
+    background: var(--color-gray-400);
+    border-radius: 50%;
+    animation: typing-bounce 1.4s ease-in-out infinite;
+}
+
+.anim-chat-typing span:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.anim-chat-typing span:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+@keyframes typing-bounce {
+
+    0%,
+    60%,
+    100% {
+        transform: translateY(0);
+    }
+
+    30% {
+        transform: translateY(-8px);
+    }
+}
+
+/* Workflow Animation */
+.anim-workflow {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.anim-workflow-node {
+    width: 80px;
+    height: 80px;
+    background: white;
+    border-radius: 18px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.anim-workflow-node svg {
+    width: 30px;
+    height: 30px;
+    color: var(--color-accent-blue);
+}
+
+.anim-workflow-node.active {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    box-shadow: 0 8px 30px rgba(59, 130, 246, 0.35);
+}
+
+.anim-workflow-node.active svg {
+    color: white;
+}
+
+.anim-workflow-line {
+    width: 50px;
+    height: 4px;
+    background: var(--color-gray-200);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+}
+
+.anim-workflow-line::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, var(--color-accent-blue), transparent);
+    animation: flow-line 2s ease-in-out infinite;
+}
+
+@keyframes flow-line {
+    0% {
+        left: -50%;
+    }
+
+    100% {
+        left: 100%;
+    }
+}
+
+/* Analytics Animation */
+.anim-analytics {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    padding: 30px;
+    height: 200px;
+}
+
+.anim-bar {
+    width: 45px;
+    background: linear-gradient(180deg, #3b82f6 0%, #8b5cf6 100%);
+    border-radius: 8px 8px 0 0;
+    animation: bar-rise 1s ease forwards;
+    transform-origin: bottom;
+    transform: scaleY(0);
+    box-shadow: 0 -4px 15px rgba(59, 130, 246, 0.2);
+}
+
+.anim-bar:nth-child(1) {
+    height: 55%;
+    animation-delay: 0.1s;
+}
+
+.anim-bar:nth-child(2) {
+    height: 75%;
+    animation-delay: 0.2s;
+}
+
+.anim-bar:nth-child(3) {
+    height: 40%;
+    animation-delay: 0.3s;
+}
+
+.anim-bar:nth-child(4) {
+    height: 85%;
+    animation-delay: 0.4s;
+}
+
+.anim-bar:nth-child(5) {
+    height: 65%;
+    animation-delay: 0.5s;
+}
+
+.anim-bar:nth-child(6) {
+    height: 95%;
+    animation-delay: 0.6s;
+}
+
+@keyframes bar-rise {
+    to {
+        transform: scaleY(1);
+    }
+}
+
+/* Responsive */
 @media (max-width: 1024px) {
     .sticky-scroll-container {
         flex-direction: column;
@@ -188,32 +766,33 @@
         position: relative;
         top: 0;
         width: 100%;
-        height: auto;
-        padding: var(--spacing-12) var(--spacing-6);
-    }
-
-    .sticky-scroll-content {
-        min-height: auto;
+        padding: var(--spacing-10) var(--spacing-6);
     }
 
     .sticky-scroll-panel {
         min-height: auto;
-        padding: var(--spacing-6) 0;
+        padding: var(--spacing-4) 0;
     }
 
-    .sticky-scroll-panel-content {
-        position: relative;
-        top: 0;
+    .sticky-scroll-animation {
+        height: 300px;
     }
 }
 
 @media (max-width: 768px) {
     .sticky-scroll-title {
-        font-size: var(--text-2xl);
-        margin-bottom: var(--spacing-6);
+        font-size: 24px;
     }
 
-    .sticky-scroll-animation {
-        height: 250px;
+    .anim-phone {
+        transform: scale(0.75);
+    }
+
+    .anim-leads {
+        width: 280px;
+    }
+
+    .anim-chat {
+        width: 280px;
     }
 }
