@@ -13,19 +13,19 @@
   let clickRipples = [];
   let mouseX = 0, mouseY = 0;
   
-  // Configuration
+  // Configuration - BOLD & VISIBLE
   const config = {
     // Static rings
-    numRings: 10,
-    baseRadius: 60,
-    ringGap: 85,
+    numRings: 8,
+    baseRadius: 50,
+    ringGap: 100,
     ringColor: { r: 59, g: 130, b: 246 },
-    maxOpacity: 0.1,
-    ringWidth: 1.2,
+    maxOpacity: 0.25,    // Much more visible
+    ringWidth: 2.5,      // Thicker rings
     
     // Animation
-    pulseSpeed: 0.005,
-    pulseAmount: 25,
+    pulseSpeed: 0.008,   // Faster pulse
+    pulseAmount: 35,     // More movement
   };
   
   function resize() {
@@ -46,15 +46,15 @@
   }
   
   function addClickRipple(x, y) {
-    // Create multiple rings for premium effect
-    for (let i = 0; i < 3; i++) {
+    // Create multiple rings for premium effect - MORE VISIBLE
+    for (let i = 0; i < 4; i++) {
       clickRipples.push({
         x: x,
         y: y,
-        radius: i * 20,
-        opacity: 0.4 - i * 0.1,
-        speed: 5 - i * 0.8,
-        lineWidth: 2.5 - i * 0.5,
+        radius: i * 25,
+        opacity: 0.7 - i * 0.12,  // Much higher opacity
+        speed: 6 - i * 0.8,
+        lineWidth: 4 - i * 0.6,   // Thicker lines
       });
     }
   }
@@ -190,10 +190,16 @@
       addClickRipple(x, y);
     });
     
-    // Initial ripple from center on page load
+    // Initial dramatic ripple sequence on page load
     setTimeout(() => {
       addClickRipple(centerX, centerY);
-    }, 600);
+    }, 300);
+    setTimeout(() => {
+      addClickRipple(centerX, centerY);
+    }, 700);
+    setTimeout(() => {
+      addClickRipple(centerX, centerY);
+    }, 1100);
     
     // Start animation
     draw();
