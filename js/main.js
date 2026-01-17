@@ -147,11 +147,51 @@ function animateCounters() {
   });
 }
 
+// Hero video click-to-play functionality
+function setupHeroVideoInteraction() {
+  const heroSection = document.querySelector('.hero');
+  const heroVideo = document.querySelector('.hero-video');
+  
+  if (heroSection && heroVideo) {
+    heroSection.style.cursor = 'pointer';
+    
+    // Use capture phase to ensure we get the click first
+    heroSection.addEventListener('click', (e) => {
+      // Don't trigger on button clicks or links
+      if (e.target.closest('.btn') || e.target.closest('a') || e.target.closest('button')) return;
+      
+      // Restart the video from beginning
+      heroVideo.pause();
+      heroVideo.currentTime = 0;
+      
+      // Use a promise-based play with error handling
+      const playPromise = heroVideo.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.log('Video play was prevented:', error);
+        });
+      }
+      
+      // Add a subtle pulse effect on click
+      heroSection.classList.add('hero-clicked');
+      setTimeout(() => {
+        heroSection.classList.remove('hero-clicked');
+      }, 600);
+    }, true); // Use capture phase
+    
+    console.log('✅ Hero video interaction initialized');
+  } else {
+    console.log('⚠️ Hero section or video not found');
+  }
+}
+
+
 // Initialize everything
 document.addEventListener('DOMContentLoaded', () => {
   pageLoadAnimation();
   setupSmoothScroll();
   setupHoverEffects();
+  setupHeroVideoInteraction();
   // setupMagneticButtons(); // Uncomment for magnetic button effect
   animateCounters();
   

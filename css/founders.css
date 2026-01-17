@@ -1,13 +1,13 @@
-/* Founders Page Styles */
+/* Founders Page Styles - Minimal Equal Layout */
 
 .founders-hero {
-    padding: 160px 0 var(--spacing-16);
-    background: var(--color-off-white);
+    padding: 160px 0 var(--spacing-12);
+    background: linear-gradient(180deg, var(--color-off-white) 0%, var(--color-white) 100%);
     text-align: center;
 }
 
 .founders-hero-content {
-    max-width: 700px;
+    max-width: 600px;
     margin: 0 auto;
     padding: 0 var(--spacing-6);
 }
@@ -16,7 +16,8 @@
     font-size: var(--text-5xl);
     font-weight: var(--font-semibold);
     color: var(--color-black);
-    margin-bottom: var(--spacing-4);
+    margin-bottom: var(--spacing-3);
+    letter-spacing: -0.03em;
 }
 
 .founders-hero-subtitle {
@@ -25,146 +26,197 @@
     line-height: var(--leading-relaxed);
 }
 
-/* Founders Grid */
+/* Founders Section */
 .founders-section {
-    padding: var(--spacing-16) 0 var(--spacing-24);
+    padding: var(--spacing-8) 0 var(--spacing-24);
     background: var(--color-white);
 }
 
 .founders-container {
-    max-width: var(--container-lg);
+    max-width: var(--container-xl);
     margin: 0 auto;
     padding: 0 var(--spacing-6);
 }
 
-.founders-grid {
+/* Equal 4-Column Grid */
+.founders-grid-equal {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--spacing-8);
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-6);
 }
 
-/* Founder Card */
-.founder-card {
+/* Minimal Founder Card */
+.founder-card-minimal {
     background: var(--color-white);
     border: 1px solid var(--color-gray-100);
-    border-radius: var(--radius-2xl);
-    padding: var(--spacing-8);
+    border-radius: 20px;
+    padding: var(--spacing-8) var(--spacing-6);
     text-align: center;
-    transition: all var(--transition-base);
-}
-
-.founder-card:hover {
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-4px);
-    border-color: var(--color-gray-200);
-}
-
-.founder-avatar {
-    width: 160px;
-    height: 160px;
-    border-radius: var(--radius-full);
-    background: var(--color-gray-100);
-    margin: 0 auto var(--spacing-6);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
     overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
-.founder-avatar img {
+.founder-card-minimal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6, #6366f1, #8b5cf6);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s ease;
+}
+
+.founder-card-minimal:hover {
+    border-color: rgba(59, 130, 246, 0.2);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(59, 130, 246, 0.1);
+    transform: translateY(-8px);
+}
+
+.founder-card-minimal:hover::before {
+    transform: scaleX(1);
+}
+
+/* Avatar */
+.founder-avatar-wrapper {
+    width: 140px;
+    height: 140px;
+    margin: 0 auto var(--spacing-5);
+    border-radius: 50%;
+    overflow: hidden;
+    position: relative;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    padding: 3px;
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.founder-card-minimal:hover .founder-avatar-wrapper {
+    transform: scale(1.05);
+    box-shadow: 0 10px 40px rgba(59, 130, 246, 0.3);
+}
+
+.founder-avatar-wrapper img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border-radius: 50%;
+    background: var(--color-white);
 }
 
-.founder-avatar-placeholder {
-    font-size: var(--text-4xl);
-    color: var(--color-gray-400);
-}
-
-.founder-initials {
-    font-size: 48px;
-    font-weight: 700;
-    color: white;
-    background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    letter-spacing: -0.02em;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.founder-name {
-    font-size: var(--text-xl);
-    font-weight: var(--font-semibold);
+/* Name & Designation */
+.founder-card-minimal .founder-name {
+    font-size: 18px;
+    font-weight: 600;
     color: var(--color-black);
-    margin-bottom: var(--spacing-2);
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
 }
 
-.founder-role {
-    font-size: var(--text-base);
+.founder-designation {
+    font-size: 14px;
     color: var(--color-accent-blue);
-    font-weight: var(--font-medium);
-    margin-bottom: var(--spacing-4);
+    font-weight: 500;
+    margin-bottom: var(--spacing-5);
 }
 
-.founder-bio {
-    font-size: var(--text-sm);
-    color: var(--color-gray-600);
-    line-height: var(--leading-relaxed);
-    margin-bottom: var(--spacing-6);
-}
-
-.founder-social {
+/* Social Links */
+.founder-social-links {
     display: flex;
     justify-content: center;
-    gap: var(--spacing-3);
+    gap: 12px;
 }
 
-.founder-social-link {
+.social-icon {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 40px;
     height: 40px;
-    background: var(--color-gray-50);
-    border-radius: var(--radius-md);
-    color: var(--color-gray-500);
-    transition: all var(--transition-base);
+    border-radius: 12px;
+    transition: all 0.3s ease;
 }
 
-.founder-social-link:hover {
-    background: var(--color-accent-blue);
-    color: var(--color-white);
+.social-icon.linkedin {
+    background: rgba(0, 119, 181, 0.08);
+    color: #0077b5;
 }
 
-.founder-social-link svg {
-    width: 20px;
-    height: 20px;
+.social-icon.linkedin:hover {
+    background: #0077b5;
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 119, 181, 0.4);
+}
+
+.social-icon.twitter {
+    background: rgba(0, 0, 0, 0.06);
+    color: #000;
+}
+
+.social-icon.twitter:hover {
+    background: #000;
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.social-icon svg {
+    width: 18px;
+    height: 18px;
 }
 
 /* Responsive */
+@media (max-width: 1024px) {
+    .founders-grid-equal {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-5);
+    }
+}
+
 @media (max-width: 768px) {
     .founders-hero {
-        padding: 140px 0 var(--spacing-12);
+        padding: 140px 0 var(--spacing-10);
     }
 
     .founders-hero-title {
         font-size: var(--text-3xl);
     }
 
-    .founders-grid {
+    .founders-grid-equal {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-4);
+    }
+
+    .founder-card-minimal {
+        padding: var(--spacing-6) var(--spacing-4);
+    }
+
+    .founder-avatar-wrapper {
+        width: 100px;
+        height: 100px;
+    }
+
+    .founder-card-minimal .founder-name {
+        font-size: 16px;
+    }
+
+    .founder-designation {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .founders-grid-equal {
         grid-template-columns: 1fr;
-        gap: var(--spacing-6);
+        gap: var(--spacing-4);
     }
 
-    .founder-card {
-        padding: var(--spacing-6);
-    }
-
-    .founder-avatar {
+    .founder-avatar-wrapper {
         width: 120px;
         height: 120px;
     }
