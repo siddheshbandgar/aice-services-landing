@@ -1125,7 +1125,7 @@ p {
     max-width: 480px;
 }
 
-/* Animation Container - Premium Light Theme */
+/* Animation Container - Award-Winning Premium Theme */
 .sticky-scroll-animation {
     width: 100%;
     height: 420px;
@@ -1141,8 +1141,17 @@ p {
         0 25px 50px -12px rgba(0, 0, 0, 0.08),
         0 0 0 1px rgba(255, 255, 255, 0.8) inset,
         0 0 80px rgba(59, 130, 246, 0.05) inset;
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.sticky-scroll-panel.active .sticky-scroll-animation {
+    box-shadow:
+        0 30px 60px -15px rgba(0, 0, 0, 0.12),
+        0 0 0 1px rgba(255, 255, 255, 0.9) inset,
+        0 0 100px rgba(59, 130, 246, 0.1) inset;
+}
+
+/* Morphing Aurora Background */
 .sticky-scroll-animation::before {
     content: '';
     position: absolute;
@@ -1151,11 +1160,42 @@ p {
     right: 0;
     bottom: 0;
     background:
-        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.08), transparent),
-        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(139, 92, 246, 0.06), transparent);
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.15), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(139, 92, 246, 0.12), transparent),
+        radial-gradient(circle at 20% 50%, rgba(34, 197, 94, 0.08), transparent 50%),
+        radial-gradient(circle at 90% 20%, rgba(236, 72, 153, 0.06), transparent 40%);
     pointer-events: none;
+    animation: aurora-morph 12s ease-in-out infinite;
+    opacity: 0.8;
 }
 
+@keyframes aurora-morph {
+
+    0%,
+    100% {
+        opacity: 0.8;
+        transform: scale(1) rotate(0deg);
+        filter: hue-rotate(0deg);
+    }
+
+    25% {
+        opacity: 1;
+        transform: scale(1.05) rotate(1deg);
+    }
+
+    50% {
+        opacity: 0.9;
+        transform: scale(1.02) rotate(-1deg);
+        filter: hue-rotate(15deg);
+    }
+
+    75% {
+        opacity: 1;
+        transform: scale(1.08) rotate(2deg);
+    }
+}
+
+/* Top highlight line */
 .sticky-scroll-animation::after {
     content: '';
     position: absolute;
@@ -1164,6 +1204,69 @@ p {
     right: 0;
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+}
+
+/* Floating Orbs/Particles Effect */
+.sticky-scroll-animation .anim-container::before {
+    content: '';
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
+    border-radius: 50%;
+    top: -50px;
+    right: -50px;
+    animation: orb-float 8s ease-in-out infinite;
+    filter: blur(2px);
+}
+
+.sticky-scroll-animation .anim-container::after {
+    content: '';
+    position: absolute;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    bottom: -30px;
+    left: -30px;
+    animation: orb-float 10s ease-in-out infinite reverse;
+    filter: blur(2px);
+}
+
+@keyframes orb-float {
+
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1);
+        opacity: 0.6;
+    }
+
+    33% {
+        transform: translate(30px, -20px) scale(1.2);
+        opacity: 1;
+    }
+
+    66% {
+        transform: translate(-10px, 10px) scale(0.9);
+        opacity: 0.8;
+    }
+}
+
+/* Glowing edge effect on active */
+.sticky-scroll-panel.active .sticky-scroll-animation::before {
+    animation: aurora-morph 8s ease-in-out infinite, glow-pulse 3s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+
+    0%,
+    100% {
+        opacity: 0.8;
+    }
+
+    50% {
+        opacity: 1;
+    }
 }
 
 /* Animated Illustrations */
@@ -3469,4 +3572,150 @@ p {
         width: 120px;
         height: 120px;
     }
+}
+
+@keyframes pulse-ring {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+/* Logos Section */
+.logos-section {
+    padding: var(--spacing-16) 0;
+    background: var(--color-off-white);
+    overflow: hidden;
+}
+
+.logos-container {
+    max-width: var(--container-xl);
+    margin: 0 auto;
+    padding: 0 var(--spacing-6);
+}
+
+.logos-header {
+    text-align: center;
+    margin-bottom: var(--spacing-12);
+}
+
+.logos-label {
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--color-gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* Marquee Animation Container */
+.logos-marquee {
+    position: relative;
+    display: flex;
+    overflow: hidden;
+    user-select: none;
+    gap: var(--spacing-8);
+    mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+}
+
+.logos-track {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-12);
+    animation: scroll-left 40s linear infinite;
+    flex-shrink: 0;
+}
+
+.logos-marquee:hover .logos-track {
+    animation-play-state: paused;
+}
+
+@keyframes scroll-left {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(calc(-100% - var(--spacing-12)));
+    }
+}
+
+/* Individual Logo */
+.logo-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 160px;
+    height: 60px;
+    padding: var(--spacing-4) var(--spacing-6);
+    background: var(--color-white);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-gray-100);
+    transition: all var(--transition-base);
+}
+
+.logo-item:hover {
+    box-shadow: var(--shadow-md);
+    transform: scale(1.02);
+}
+
+.logo-item img {
+    max-width: 120px;
+    max-height: 40px;
+    object-fit: contain;
+    filter: grayscale(100%);
+    opacity: 0.7;
+    transition: all var(--transition-base);
+}
+
+.logo-item:hover img {
+    filter: grayscale(0%);
+    opacity: 1;
+}
+
+/* Placeholder Logo */
+.logo-placeholder {
+    font-size: var(--text-lg);
+    font-weight: var(--font-bold);
+    color: var(--color-gray-400);
+    letter-spacing: -0.02em;
+}
+
+@media (max-width: 768px) {
+    .logos-section {
+        padding: var(--spacing-12) 0;
+    }
+
+    .logos-track {
+        gap: var(--spacing-8);
+    }
+
+    .logo-item {
+        min-width: 140px;
+        padding: var(--spacing-3) var(--spacing-4);
+    }
+}
+
+/* Testimonial Hover Effects */
+.testimonial-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.testimonial-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+.testimonial-avatar-wrapper {
+    transition: transform 0.3s ease;
+}
+
+.testimonial-card:hover .testimonial-avatar-wrapper {
+    transform: scale(1.1);
 }

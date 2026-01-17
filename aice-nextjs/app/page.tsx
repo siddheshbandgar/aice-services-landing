@@ -3,6 +3,7 @@ import HeroSection from '@/components/HeroSection';
 import StickyScroll from '@/components/StickyScroll';
 import Testimonials from '@/components/Testimonials';
 import CTASection from '@/components/CTASection';
+import Logos from '@/components/Logos';
 
 export const metadata: Metadata = {
   title: 'AICE - AI Services for Enterprise',
@@ -95,6 +96,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Customer Logos Section */}
+      <Logos />
 
       {/* Testimonials */}
       <Testimonials />
