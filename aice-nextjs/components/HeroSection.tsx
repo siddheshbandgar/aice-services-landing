@@ -7,44 +7,29 @@ export default function HeroSection() {
     const { openModal } = useModal();
     const videoRef = useRef<HTMLVideoElement>(null);
 
-    // Ensure video plays on any interaction if it was paused
-    useEffect(() => {
-        const handleInteraction = () => {
-            if (videoRef.current && videoRef.current.paused) {
-                videoRef.current.play().catch(e => console.log("Auto-play prevented (interaction needed):", e));
-            }
-        };
-
-        // Attach listener to the section or document. 
-        // User asked for "mouse click", so we'll listen on the hero section primarily.
-        const heroSection = document.getElementById('hero');
-        if (heroSection) {
-            heroSection.addEventListener('click', handleInteraction);
-        }
-
-        return () => {
-            if (heroSection) {
-                heroSection.removeEventListener('click', handleInteraction);
-            }
-        };
-    }, []);
-
-    const scrollToSolutions = (e: MouseEvent) => {
-        e.stopPropagation(); // Prevent triggering the video play (though it wouldn't hurt)
-
-        // Find the AI Solutions nav item and trigger hover/click
-        const navItem = document.querySelector('.nav-item');
-        if (navItem) {
-            // Scroll to the sticky scroll section
-            const stickySection = document.getElementById('what-we-do');
-            if (stickySection) {
-                stickySection.scrollIntoView({ behavior: 'smooth' });
+    const togglePlay = () => {
+        if (videoRef.current) {
+            if (videoRef.current.paused) {
+                videoRef.current.play().catch(e => console.log("Play failed:", e));
+            } else {
+                // Optional: pause on click? User said "clicking should play", usually implies if it's not playing.
+                // But for background video, resetting to play is safer usually.
+                // Keeping it play-only ensures we don't accidentally pause if they miss a button.
+                videoRef.current.play().catch(e => console.log("Play failed:", e));
             }
         }
     };
 
+    const scrollToSolutions = (e: MouseEvent) => {
+        e.stopPropagation();
+        const stickySection = document.getElementById('what-we-do');
+        if (stickySection) {
+            stickySection.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
     return (
-        <section className="hero" id="hero">
+        <section className="hero" id="hero" onClick={togglePlay} style={{ cursor: 'pointer' }}>
             <div className="hero-bg"></div>
 
             <div className="hero-video-container">
@@ -72,7 +57,7 @@ export default function HeroSection() {
                     workflows, and unlock the full potential of your enterprise.
                 </p>
                 <div className="hero-cta">
-                    <button className="btn btn-primary btn-lg" onClick={openModal}>Request a Demo</button>
+                    <button className="btn btn-primary btn-lg" onClick={(e) => { e.stopPropagation(); openModal(); }}>Request a Demo</button>
                     <button className="btn btn-secondary btn-lg" onClick={scrollToSolutions}>Learn More</button>
                 </div>
             </div>

@@ -66,6 +66,7 @@ export default function Navbar() {
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
+    const [mobileSolutionsOpen, setMobileSolutionsOpen] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -79,10 +80,20 @@ export default function Navbar() {
         setShowDropdown(!showDropdown);
     };
 
+    const closeMobileMenu = () => {
+        setMobileMenuOpen(false);
+        setMobileSolutionsOpen(false); // Reset dropdown on close
+    };
+
+    const handleMobileDemoClick = () => {
+        closeMobileMenu();
+        openModal();
+    };
+
     return (
         <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
             <div className="navbar-container">
-                <Link href="/" className="navbar-logo">AICE</Link>
+                <Link href="/" className="navbar-logo" onClick={closeMobileMenu}>AICE</Link>
 
                 <ul className="navbar-nav">
                     <li className="nav-item" onMouseEnter={() => setShowDropdown(true)} onMouseLeave={() => setShowDropdown(false)}>
@@ -127,25 +138,42 @@ export default function Navbar() {
 
             <div className={`mobile-menu ${mobileMenuOpen ? 'active' : ''}`}>
                 <div className="mobile-nav-item">
-                    <a href="#" className="mobile-nav-link">
+                    <button
+                        className="mobile-nav-link"
+                        onClick={() => setMobileSolutionsOpen(!mobileSolutionsOpen)}
+                        style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', padding: '12px 0', fontSize: '18px', textAlign: 'left' }}
+                    >
                         AI Solutions
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            style={{ transform: mobileSolutionsOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' }}
+                        >
                             <path d="m6 9 6 6 6-6" />
                         </svg>
-                    </a>
-                    <div className="mobile-dropdown">
-                        {industries.map((item) => (
-                            <Link key={item.href} href={item.href} className="mobile-dropdown-item">
-                                {item.title}
-                            </Link>
-                        ))}
-                    </div>
+                    </button>
+                    {mobileSolutionsOpen && (
+                        <div className="mobile-dropdown" style={{ paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
+                            {industries.map((item) => (
+                                <Link key={item.href} href={item.href} className="mobile-dropdown-item" onClick={closeMobileMenu} style={{ fontSize: '15px', color: '#64748b' }}>
+                                    {item.title}
+                                </Link>
+                            ))}
+                        </div>
+                    )}
                 </div>
                 <div className="mobile-nav-item">
-                    <Link href="/founders" className="mobile-nav-link">Meet the Founders</Link>
+                    <Link href="/founders" className="mobile-nav-link" onClick={closeMobileMenu} style={{ display: 'block', padding: '12px 0', fontSize: '18px' }}>Meet the Founders</Link>
                 </div>
                 <div style={{ padding: '24px 0' }}>
-                    <button className="btn btn-primary" style={{ width: '100%' }} onClick={openModal}>
+                    <button className="btn btn-primary" style={{ width: '100%' }} onClick={handleMobileDemoClick}>
                         Book a Demo
                     </button>
                 </div>
