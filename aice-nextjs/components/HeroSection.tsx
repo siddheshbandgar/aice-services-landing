@@ -50,7 +50,7 @@ export default function HeroSection() {
 
             <div className="hero-content">
                 <h1 className="hero-title">
-                    Reimagine Your<br />Business with AI
+                    Reimagine Your <br />Business with AI
                 </h1>
                 <p className="hero-subtitle">
                     Accelerate operations with AICE&apos;s intelligent AI solutions. Automate customer interactions, streamline
