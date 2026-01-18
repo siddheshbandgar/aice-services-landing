@@ -2421,7 +2421,7 @@ p {
 /* Testimonials Section with Arrow Navigation */
 
 .testimonials-section {
-    padding: 96px 0;
+    padding: 80px 0 40px;
     background: linear-gradient(180deg, #EBF5FF 0%, #F8FBFE 100%);
     position: relative;
     overflow: hidden;

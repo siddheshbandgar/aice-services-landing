@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
 const testimonials = [
     {
@@ -39,6 +39,9 @@ const StarIcon = () => (
     </svg>
 );
 
+// Create extended array for infinite scroll effect
+const extendedTestimonials = [...testimonials, ...testimonials, ...testimonials];
+
 export default function Testimonials() {
     const [activeIndex, setActiveIndex] = useState(0);
     const trackRef = useRef<HTMLDivElement>(null);
@@ -50,7 +53,6 @@ export default function Testimonials() {
         const updateWidth = () => {
             if (trackRef.current && trackRef.current.children.length > 0) {
                 const firstCard = trackRef.current.children[0] as HTMLElement;
-                // Get style to find gap
                 const style = window.getComputedStyle(trackRef.current);
                 const gap = parseFloat(style.gap || '0');
                 setItemWidth(firstCard.offsetWidth + gap);
@@ -62,7 +64,7 @@ export default function Testimonials() {
         return () => window.removeEventListener('resize', updateWidth);
     }, []);
 
-    const goTo = (index: number) => {
+    const goTo = useCallback((index: number) => {
         if (isAnimating) return;
 
         // Circular navigation
@@ -73,14 +75,14 @@ export default function Testimonials() {
         setIsAnimating(true);
         setActiveIndex(newIndex);
 
-        // Timeout matches CSS transition
         setTimeout(() => setIsAnimating(false), 500);
-    };
+    }, [isAnimating]);
 
-    // Apply transform via style execution based on activeIndex
+    // Apply transform - offset by testimonials.length to start in the middle set
     useEffect(() => {
         if (trackRef.current && itemWidth > 0) {
-            trackRef.current.style.transform = `translateX(-${activeIndex * itemWidth}px)`;
+            const offset = (activeIndex + testimonials.length) * itemWidth;
+            trackRef.current.style.transform = `translateX(-${offset}px)`;
         }
     }, [activeIndex, itemWidth]);
 
@@ -88,9 +90,9 @@ export default function Testimonials() {
     useEffect(() => {
         const interval = setInterval(() => {
             goTo(activeIndex + 1);
-        }, 6000); // 6 seconds
+        }, 6000);
         return () => clearInterval(interval);
-    }, [activeIndex]);
+    }, [activeIndex, goTo]);
 
     return (
         <section className="testimonials-section" id="testimonials">
@@ -102,7 +104,7 @@ export default function Testimonials() {
 
                 <div className="testimonials-carousel">
                     <div className="testimonials-track" ref={trackRef}>
-                        {testimonials.map((t, i) => (
+                        {extendedTestimonials.map((t, i) => (
                             <div key={i} className="testimonial-card">
                                 <div className="testimonial-rating">
                                     <StarIcon /><StarIcon /><StarIcon /><StarIcon /><StarIcon />
@@ -154,3 +156,4 @@ export default function Testimonials() {
         </section>
     );
 }
+
