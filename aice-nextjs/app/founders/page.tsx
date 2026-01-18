@@ -23,7 +23,7 @@ const founders = [
     },
     {
         name: 'Ajinkya Hazare',
-        designation: 'Co-Founder | Platform & Delivery',
+        designation: 'Co-Founder | Innovation & Growth',
         image: 'https://media.licdn.com/dms/image/v2/D4D03AQFbI3DgCKQgmw/profile-displayphoto-shrink_400_400/B4DZYcWkImG4Ak-/0/1744232400341?e=1769644800&v=beta&t=Sg01VbyJTPp-fVDAj8ZUdV1nbkUbcgIpuqhnuW8jXko',
         linkedin: 'https://www.linkedin.com/in/ajinkya-hazare-b59258170/',
         twitter: 'https://twitter.com/',

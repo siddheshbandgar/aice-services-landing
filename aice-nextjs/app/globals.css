@@ -3719,3 +3719,111 @@ p {
 .testimonial-card:hover .testimonial-avatar-wrapper {
     transform: scale(1.1);
 }
+
+/* Custom Solutions Animation */
+.anim-custom {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.anim-custom-circle {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 2px dashed rgba(59, 130, 246, 0.3);
+    animation: rotate 20s linear infinite;
+}
+
+.anim-custom-icon {
+    position: relative;
+    z-index: 10;
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1));
+    border-radius: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    color: #3b82f6;
+}
+
+.anim-custom-orbit {
+    position: absolute;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    border: 1px solid rgba(59, 130, 246, 0.1);
+    animation: rotate 8s linear infinite;
+}
+
+.anim-custom-orbit.outer {
+    width: 200px;
+    height: 200px;
+    animation: rotate 12s linear infinite reverse;
+    border-color: rgba(147, 51, 234, 0.1);
+}
+
+.anim-custom-planet {
+    position: absolute;
+    top: 50%;
+    left: -6px;
+    width: 12px;
+    height: 12px;
+    background: #3b82f6;
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    margin-top: -6px;
+}
+
+.anim-custom-orbit.outer .anim-custom-planet {
+    background: #9333ea;
+    box-shadow: 0 0 10px rgba(147, 51, 234, 0.5);
+    width: 10px;
+    height: 10px;
+    left: auto;
+    right: -5px;
+    margin-top: -5px;
+}
+
+.anim-custom-label {
+    position: absolute;
+    bottom: -40px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1e293b;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}

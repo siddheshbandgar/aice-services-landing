@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const scrollItems = [
     {
@@ -38,6 +38,12 @@ const scrollItems = [
         title: 'Analytics & Insights',
         desc: 'Real-time dashboards and AI-powered insights. Understand customer behavior, track performance, and make data-driven decisions.',
         animation: 'analytics'
+    },
+    {
+        icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>,
+        title: 'Custom AI Solutions',
+        desc: 'Have a unique requirement? We design and build custom AI solutions tailored specifically to your business needs and workflows.',
+        animation: 'custom'
     },
 ];
 
@@ -174,7 +180,29 @@ const animations: { [key: string]: React.ReactNode } = {
     chat: <ChatAnimation />,
     workflow: <WorkflowAnimation />,
     analytics: <AnalyticsAnimation />,
+    custom: <CustomAnimation />,
 };
+
+function CustomAnimation() {
+    return (
+        <div className="anim-custom">
+            <div className="anim-custom-circle"></div>
+            <div className="anim-custom-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    <path d="m9 12 2 2 4-4" />
+                </svg>
+            </div>
+            <div className="anim-custom-orbit">
+                <div className="anim-custom-planet"></div>
+            </div>
+            <div className="anim-custom-orbit outer">
+                <div className="anim-custom-planet"></div>
+            </div>
+            <div className="anim-custom-label">Tailored for You</div>
+        </div>
+    );
+}
 
 export default function StickyScroll() {
     const [activeIndex, setActiveIndex] = useState(0);
