@@ -3827,3 +3827,45 @@ p {
         transform: translateY(-10px);
     }
 }
+
+/* ==========================================
+   MAGICALCX CHATBOT WIDGET STYLING
+   ========================================== */
+
+/* Let MagicalCX handle its own positioning - just ensure it's above everything */
+[class*="magicalcx"],
+[id*="magicalcx"],
+[class*="magical-cx"],
+[id*="magical-cx"],
+iframe[src*="magicalcx"],
+div[data-widget],
+#magicalcx-widget,
+.magicalcx-widget {
+    z-index: 99999 !important;
+}
+
+/* Attention-grabbing animation for chatbot launcher - plays only once on page load */
+[class*="magicalcx"] button,
+[id*="magicalcx"] button,
+[class*="magical-cx"] button,
+[id*="magical-cx"] button {
+    animation: chatbotAttention 1.5s ease-in-out 1s 3 !important;
+}
+
+/* Pulsing ring animation */
+@keyframes chatbotAttention {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+    }
+
+    50% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 15px rgba(59, 130, 246, 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    }
+}
