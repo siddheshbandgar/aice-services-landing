@@ -25,7 +25,7 @@ export default function Hero() {
             </p>
 
             <a
-                href="#pricing"
+                href="#plan-119"
                 className="relative inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-6 py-3 text-xs uppercase tracking-[0.2em] text-slate-300 transition-all hover:border-[#ff6b6b]/60 hover:bg-white/10 hover:text-white"
             >
                 {/* Pulse Glow Effect */}
