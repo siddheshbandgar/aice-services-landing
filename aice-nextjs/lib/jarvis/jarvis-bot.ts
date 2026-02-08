@@ -92,19 +92,19 @@ export class JarvisBot {
       const agents = await this.api.getAgents();
 
       // Simple parsing - in production would use better NLP
-      const agentNames = agents.agents.map(a => a.name.toLowerCase());
-      const foundAgent = agentNames.find(name => message.toLowerCase().includes(name));
+      const agentNames = agents.agents.map((a: any) => a.name.toLowerCase());
+      const foundAgent = agentNames.find((name: string) => message.toLowerCase().includes(name));
       
       if (!foundAgent) {
         const availableAgents = agents.agents
-          .filter(a => a.status === 'idle')
-          .map(a => `${a.name} (${a.role})`)
+          .filter((a: any) => a.status === 'idle')
+          .map((a: any) => `${a.name} (${a.role})`)
           .join(', ');
         return `🤔 Which agent should I assign this to?\nAvailable: ${availableAgents}`;
       }
 
       // Find task by keywords or show list
-      const unassignedTasks = tasks.tasks.filter(t => 
+      const unassignedTasks = tasks.tasks.filter((t: any) => 
         t.status === 'inbox' || t.assigneeIds.length === 0
       );
 
@@ -115,7 +115,7 @@ export class JarvisBot {
       // For now, return manual assignment options
       // In production, would implement better task matching
       const taskList = unassignedTasks
-        .map((t, i) => `${i + 1}. ${t.title}`)
+        .map((t: any, i: number) => `${i + 1}. ${t.title}`)
         .join('\n');
 
       return `🎯 **Unassigned Tasks:**\n${taskList}\n\nReply with the task number to assign to ${foundAgent}`;
@@ -129,15 +129,15 @@ export class JarvisBot {
   async getAvailableAgents(): Promise<string> {
     try {
       const agents = await this.api.getAgents();
-      const available = agents.agents.filter(a => a.status === 'idle');
-      const busy = agents.agents.filter(a => a.status === 'working');
+      const available = agents.agents.filter((a: any) => a.status === 'idle');
+      const busy = agents.agents.filter((a: any) => a.status === 'working');
 
       let response = `👥 **Agent Availability**\n\n`;
       
       if (available.length > 0) {
         response += `✅ **Available:**\n`;
         for (const agent of available) {
-          response += `• ${agent.emoji} ${agent.name} - ${agent.role}\n`;
+          response += `• ${(agent as any).emoji} ${(agent as any).name} - ${(agent as any).role}\n`;
         }
         response += '\n';
       }
@@ -145,7 +145,7 @@ export class JarvisBot {
       if (busy.length > 0) {
         response += `🔄 **Currently Working:**\n`;
         for (const agent of busy) {
-          response += `• ${agent.emoji} ${agent.name} - ${agent.role}\n`;
+          response += `• ${(agent as any).emoji} ${(agent as any).name} - ${(agent as any).role}\n`;
         }
       }
 

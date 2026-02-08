@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Jarvis chat error:", error);
     return NextResponse.json(
-      { error: "Jarvis encountered an error", details: error.toString() },
+      { error: "Jarvis encountered an error", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

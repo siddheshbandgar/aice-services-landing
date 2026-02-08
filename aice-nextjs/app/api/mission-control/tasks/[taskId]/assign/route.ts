@@ -8,12 +8,13 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 // POST /api/mission-control/tasks/[taskId]/assign - Assign task to agents
 export async function POST(
   request: NextRequest,
-  { params }: { params: { taskId: string } }
+  { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
     const body = await request.json();
     const { assigneeIds, notifyAgents = false } = body;
-    const taskId = params.taskId as Id<"tasks">;
+    const resolvedParams = await params;
+    const taskId = resolvedParams.taskId as Id<"tasks">;
 
     if (!assigneeIds || !Array.isArray(assigneeIds)) {
       return NextResponse.json({ error: "assigneeIds array required" }, { status: 400 });

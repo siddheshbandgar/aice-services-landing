@@ -16,7 +16,7 @@ export default function AdminPage() {
       setSeedResult(result);
     } catch (error) {
       console.error("Seeding failed:", error);
-      setSeedResult({ error: error.toString() });
+      setSeedResult({ error: error instanceof Error ? error.message : String(error) });
     } finally {
       setIsSeeding(false);
     }
