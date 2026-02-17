@@ -172,8 +172,9 @@ export default function GlobalAISummitPage() {
                     gap: 3px;
                     font-size: 12px;
                     font-weight: 500;
-                    color: rgba(255, 255, 255, 0.4);
+                    color: rgba(255, 255, 255, 0.55);
                     text-decoration: none;
+                    white-space: nowrap;
                 }
 
                 /* ---- Chatbot ---- */
@@ -214,7 +215,8 @@ export default function GlobalAISummitPage() {
                     }
 
                     .summit-home {
-                        display: none;
+                        font-size: 11px;
+                        display: inline-flex;
                     }
                 }
             `}</style>
