@@ -26,7 +26,7 @@ export default function Home() {
     return () => { ok = false; };
   }, []);
 
-  const STRIPE_LINK = "https://buy.stripe.com/5kQ6oJgYqe4N7vB3JJc3m08";
+  const STRIPE_LINK = "https://buy.stripe.com/6oU14paA2gcV4jpeonc3m09";
   const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
   const disabled = useMemo(() => loading || !isValidEmail(email), [loading, email]);
 
@@ -101,8 +101,8 @@ export default function Home() {
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-orange-600">Ticket Alert</p>
                 <p className="mt-1 flex items-baseline gap-2">
-                  <span className="text-4xl font-black text-gray-900">&#8377;999</span>
-                  <span className="text-sm text-gray-400 line-through">&#8377;1999</span>
+                  <span className="text-4xl font-black text-gray-900">&#8377;99</span>
+                  <span className="text-sm text-gray-400 line-through">&#8377;999</span>
                 </p>
               </div>
               <span className="rounded-full bg-red-500 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white">Limited</span>
@@ -118,7 +118,7 @@ export default function Home() {
                 </select>
               )}
               <button type="submit" disabled={disabled} className="w-full rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 px-4 py-3.5 text-sm font-extrabold uppercase tracking-wider text-white shadow-lg shadow-orange-300/50 transition-all hover:from-orange-400 hover:to-orange-500 hover:shadow-orange-400/50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none">
-                {loading ? "Redirecting to Payment..." : "Pay ₹999 — Get Ticket Alert"}
+                {loading ? "Redirecting to Payment..." : "Pay ₹99 — Get Ticket Alert"}
               </button>
               <p className="text-center text-[10px] text-gray-400">Secure payment via Stripe &middot; Activates instantly</p>
             </form>
@@ -148,7 +148,7 @@ export default function Home() {
         <div className="grid gap-5 lg:grid-cols-3">
           {[
             { n: "01", title: "Enter your email", desc: "Tell us where to send the booking alert." },
-            { n: "02", title: "Pay ₹999 once", desc: "Instant activation. No subscriptions, no hidden fees." },
+            { n: "02", title: "Pay ₹99 once", desc: "Instant activation. No subscriptions, no hidden fees." },
             { n: "03", title: "Get alerted first", desc: "Email with direct BookMyShow link the second tickets drop." },
           ].map((s) => (
             <div key={s.n} className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
@@ -200,7 +200,7 @@ export default function Home() {
           <p className="text-2xl font-black text-gray-900 sm:text-3xl">Don&#39;t miss the match of the decade.</p>
           <p className="mt-2 text-sm text-gray-600">India vs England. Wankhede. 5th March. You know you want to be there.</p>
           <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="mt-4 inline-block rounded-lg bg-orange-500 px-8 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-md shadow-orange-200 transition hover:bg-orange-400">
-            Get Your Alert — ₹999
+            Get Your Alert — ₹99
           </a>
         </div>
       </div>
