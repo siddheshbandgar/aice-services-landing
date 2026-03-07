@@ -39,7 +39,7 @@ export default function FinalsPage() {
               <span className="text-white/30">&bull;</span>
               <span>7:00 PM IST</span>
               <span className="text-white/30">&bull;</span>
-              <span>Wankhede Stadium, Mumbai</span>
+              <span>Narendra Modi Stadium, Ahmedabad</span>
             </div>
 
             <p className="mt-5 max-w-lg text-sm leading-relaxed text-white/80 sm:text-base">
@@ -69,7 +69,7 @@ export default function FinalsPage() {
               </div>
               <span className="rounded-full bg-red-500 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white animate-pulse">Limited Spots</span>
             </div>
-            <p className="mt-1 text-xs text-gray-500">One-time &middot; IND vs NZ &middot; Wankhede, Mumbai</p>
+            <p className="mt-1 text-xs text-gray-500">One-time &middot; IND vs NZ &middot; Ahmedabad</p>
 
             {/* UPI badge */}
             <div className="mt-3 flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 px-3 py-2">
