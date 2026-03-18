@@ -185,10 +185,10 @@ function JourneyNode({ icon, label }: { icon: React.ReactNode; label: string }) 
    FEATURE ROW
    ========================================== */
 function FeatureRow({
-    heading, bullets, screenshotLabel, screenshotComment, icon, reversed,
+    heading, bullets, screenshotLabel, screenshotComment, icon, reversed, imageSrc,
 }: {
     heading: string; bullets: string[]; screenshotLabel: string;
-    screenshotComment?: string; icon: React.ReactNode; reversed?: boolean;
+    screenshotComment?: string; icon: React.ReactNode; reversed?: boolean; imageSrc?: string;
 }) {
     return (
         <div className={`hc-feature-row hc-reveal ${reversed ? 'hc-feature-reversed' : ''}`}>
@@ -205,9 +205,13 @@ function FeatureRow({
                 </ul>
             </div>
             <div className="hc-feature-image">
-                {/* REPLACE: {screenshotComment} */}
                 <div className={`hc-img-tilt ${reversed ? 'hc-tilt-right' : 'hc-tilt-left'}`}>
-                    <ScreenPlaceholder label={screenshotLabel} />
+                    {imageSrc ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={imageSrc} alt={screenshotLabel} className="hc-real-img" />
+                    ) : (
+                        <ScreenPlaceholder label={screenshotLabel} />
+                    )}
                 </div>
             </div>
         </div>
@@ -261,9 +265,9 @@ export default function HealthcarePage() {
                             </div>
                         </div>
                         <div className="hc-hero-visual">
-                            {/* REPLACE: Dashboard overview screenshot */}
                             <div className="hc-hero-img-wrap">
-                                <ScreenPlaceholder label="Dashboard Overview" />
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src="/healthcare/01-dashboard.png" alt="AICE Healthcare Dashboard" className="hc-real-img" />
                             </div>
                         </div>
                     </div>
@@ -417,31 +421,38 @@ export default function HealthcarePage() {
 
                     <FeatureRow heading="Every Lead, One Dashboard" icon={Icons.users}
                         bullets={['Capture leads from Instagram, Facebook & Google ads automatically', 'See lead source, interest, status — at a glance', 'AI-generated lead summaries and engagement scoring', 'Follow up via WhatsApp directly from the dashboard']}
-                        screenshotLabel="Lead CRM Dashboard" screenshotComment="Lead CRM screenshot" />
+                        screenshotLabel="Lead CRM Dashboard" screenshotComment="Lead CRM screenshot"
+                        imageSrc="/healthcare/02-leads.png" />
 
                     <FeatureRow heading="Patient Records, Fully Digital" icon={Icons.heart} reversed
                         bullets={['Complete patient profiles — history, allergies, medications, treatment tags', 'Visit-by-visit timeline with diagnosis, treatment notes, and photos', 'Before/after photos attached to each visit', 'Search patients by name, phone, or treatment type']}
-                        screenshotLabel="Patient Records (EHR)" screenshotComment="Patient records screenshot" />
+                        screenshotLabel="Patient Records (EHR)" screenshotComment="Patient records screenshot"
+                        imageSrc="/healthcare/03-patients.png" />
 
                     <FeatureRow heading="Appointments That Manage Themselves" icon={Icons.calendar}
                         bullets={['Patients book via WhatsApp — AI handles scheduling', 'Automatic reminders 24 hours and 2 hours before', 'No-show tracking and rebooking suggestions', 'Calendar view for the doctor to see the full day']}
-                        screenshotLabel="Smart Appointments" screenshotComment="Appointments calendar screenshot" />
+                        screenshotLabel="Smart Appointments" screenshotComment="Appointments calendar screenshot"
+                        imageSrc="/healthcare/04-appointments.png" />
 
                     <FeatureRow heading="Forms on WhatsApp. Signatures on iPad." icon={Icons.clipboard} reversed
                         bullets={['Send client data forms to patients on WhatsApp before they arrive', 'Patient fills medical history, allergies, treatment interest — digitally', 'Consent forms with digital signature capture on iPad at the clinic', 'Everything stored in the patient\'s record — no paper, no filing']}
-                        screenshotLabel="Digital Forms & Consent" screenshotComment="Consent form screenshot" />
+                        screenshotLabel="Digital Forms & Consent" screenshotComment="Consent form screenshot"
+                        imageSrc="/healthcare/05-forms.png" />
 
                     <FeatureRow heading="Prescriptions, Sent in One Click" icon={Icons.pill}
                         bullets={['Create prescriptions with medicine name, dosage, frequency, duration', 'Send directly to patient\'s WhatsApp — instantly', 'Stored in patient\'s digital record permanently', 'Searchable — find all patients prescribed a specific medicine']}
-                        screenshotLabel="Prescription Management" screenshotComment="Prescription page screenshot" />
+                        screenshotLabel="Prescription Management" screenshotComment="Prescription page screenshot"
+                        imageSrc="/healthcare/06-prescriptions.png" />
 
                     <FeatureRow heading="Billing That Builds Loyalty" icon={Icons.receipt} reversed
                         bullets={['Consultation, service, and medicine billing — all in one place', 'Built-in loyalty points system — patients earn and redeem points', 'Bills sent to patients via WhatsApp automatically', 'Track revenue by service type, doctor, and time period']}
-                        screenshotLabel="Billing & Loyalty Points" screenshotComment="Billing page screenshot" />
+                        screenshotLabel="Billing & Loyalty Points" screenshotComment="Billing page screenshot"
+                        imageSrc="/healthcare/07-billing.png" />
 
                     <FeatureRow heading="Right Message. Right Patients. Right Time." icon={Icons.megaphone}
                         bullets={['Segment patients by treatment type — Laser, Botox, Acne, Hair Fall', 'Send targeted offers only to relevant patients', 'No more manual one-by-one messaging', 'Track delivery, read receipts, and responses']}
-                        screenshotLabel="WhatsApp Campaigns" screenshotComment="Campaign builder screenshot" />
+                        screenshotLabel="WhatsApp Campaigns" screenshotComment="Campaign builder screenshot"
+                        imageSrc="/healthcare/08-campaigns.png" />
                 </div>
             </section>
 
@@ -1254,6 +1265,15 @@ export default function HealthcarePage() {
 .hc-feature-image:hover .hc-img-tilt {
     transform: perspective(1200px) rotateY(0deg) rotateX(0deg);
 }
+/* Real screenshot images */
+.hc-real-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: var(--radius-xl);
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
 
 /* ==========================================
    SCREEN PLACEHOLDER
@@ -1559,6 +1579,7 @@ export default function HealthcarePage() {
     font-size: 14px;
     color: rgba(148,163,184,0.7);
     line-height: 1.65;
+    text-align: left;
 }
 .hc-excl-cities {
     font-size: var(--text-base);
@@ -1641,6 +1662,7 @@ export default function HealthcarePage() {
     position: relative;
     display: flex;
     flex-direction: column;
+    text-align: left;
 }
 .hc-tier-card:hover {
     transform: translateY(-4px);
@@ -1731,6 +1753,7 @@ export default function HealthcarePage() {
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: var(--radius-2xl);
     padding: var(--spacing-10);
+    text-align: left;
 }
 .hc-cta-card h3 { font-size: var(--text-2xl); font-weight: 700; color: var(--color-white); margin-bottom: var(--spacing-3); }
 .hc-cta-card p { font-size: var(--text-base); color: var(--color-gray-400); margin-bottom: var(--spacing-6); line-height: 1.6; }
