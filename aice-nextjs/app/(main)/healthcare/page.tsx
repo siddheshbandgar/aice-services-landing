@@ -236,8 +236,15 @@ export default function HealthcarePage() {
                         <div className="hc-hero-content">
                             {/* Exclusivity badge */}
                             <div className="hc-exclusive-badge">
-                                <span className="hc-badge-star">✦</span>
-                                By Invitation Only &middot; Limited to 100 Clinics Per City
+                                <span className="hc-badge-left">
+                                    <span className="hc-badge-star">✦</span>
+                                    By Invitation Only
+                                </span>
+                                <span className="hc-badge-divider" />
+                                <span className="hc-badge-right">
+                                    Limited to <span className="hc-badge-count">100</span> Clinics / City
+                                </span>
+                                <span className="hc-badge-shimmer" />
                             </div>
                             <h1>The Clinic Platform Built for Top Doctors</h1>
                             <p>
@@ -743,25 +750,78 @@ export default function HealthcarePage() {
 .hc-hero-content { max-width: 520px; }
 
 /* Gold exclusivity badge */
+@keyframes hc-badge-shimmer {
+    0%   { transform: translateX(-120%); }
+    60%  { transform: translateX(120%); }
+    100% { transform: translateX(120%); }
+}
 .hc-exclusive-badge {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 9px 20px;
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 60%, #fef3c7 100%);
-    border: 1px solid #f59e0b;
+    gap: 0;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 55%, #fef9c3 100%);
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    border-radius: 999px;
+    margin-bottom: var(--spacing-5);
+    overflow: hidden;
+    position: relative;
+    box-shadow:
+        0 2px 12px rgba(245, 158, 11, 0.25),
+        0 1px 3px rgba(245, 158, 11, 0.15),
+        inset 0 1px 0 rgba(255,255,255,0.6);
+}
+.hc-badge-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 16px;
     color: #78350f;
     font-size: 11px;
     font-weight: 700;
-    border-radius: 999px;
-    margin-bottom: var(--spacing-5);
     letter-spacing: 0.07em;
     text-transform: uppercase;
-    box-shadow: 0 2px 16px rgba(245, 158, 11, 0.18), inset 0 1px 0 rgba(255,255,255,0.5);
+    white-space: nowrap;
+}
+.hc-badge-divider {
+    width: 1px;
+    height: 16px;
+    background: rgba(180, 100, 0, 0.3);
+    flex-shrink: 0;
+}
+.hc-badge-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 9px 16px;
+    color: #92400e;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.hc-badge-count {
+    font-size: 13px;
+    font-weight: 800;
+    color: #b45309;
+    letter-spacing: 0;
 }
 .hc-badge-star {
     color: #d97706;
-    font-size: 10px;
+    font-size: 11px;
+    line-height: 1;
+}
+.hc-badge-shimmer {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        105deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.55) 50%,
+        transparent 70%
+    );
+    animation: hc-badge-shimmer 3.5s ease-in-out infinite;
+    pointer-events: none;
 }
 
 .hc-hero-content h1 {
@@ -848,7 +908,7 @@ export default function HealthcarePage() {
    ========================================== */
 .hc-section-header {
     text-align: center;
-    margin-bottom: var(--spacing-14);
+    margin-bottom: 3.5rem;
 }
 .hc-section-label {
     display: inline-block;
@@ -1524,7 +1584,7 @@ export default function HealthcarePage() {
     font-size: var(--text-lg);
     color: rgba(148,163,184,0.8);
     max-width: 680px;
-    margin: 0 auto var(--spacing-14);
+    margin: 0 auto 3.5rem;
     line-height: 1.75;
     text-align: left;
 }
@@ -1663,6 +1723,7 @@ export default function HealthcarePage() {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: var(--spacing-6);
+    margin-top: 20px;
     margin-bottom: var(--spacing-12);
     align-items: stretch;
 }
@@ -1685,6 +1746,7 @@ export default function HealthcarePage() {
     background: var(--color-white);
     border: 2px solid var(--color-accent-blue);
     box-shadow: 0 12px 40px rgba(59,130,246,0.1);
+    padding-top: 3rem;
 }
 .hc-tier-featured:hover {
     box-shadow: 0 20px 60px rgba(59,130,246,0.15);
@@ -1845,7 +1907,8 @@ export default function HealthcarePage() {
 
 @media (max-width: 480px) {
     .hc-roi-grid { grid-template-columns: 1fr; }
-    .hc-exclusive-badge { font-size: 10px; padding: 8px 14px; text-align: center; }
+    .hc-badge-left, .hc-badge-right { font-size: 10px; padding: 8px 12px; }
+    .hc-badge-count { font-size: 12px; }
 }
 
             `}</style>
