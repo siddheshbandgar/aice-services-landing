@@ -723,7 +723,7 @@ export default function HealthcarePage() {
    ========================================== */
 .hc-hero {
     position: relative;
-    padding: 160px 0 0;
+    padding: 120px 0 0;
     overflow: hidden;
     background: var(--color-white);
 }
@@ -736,11 +736,11 @@ export default function HealthcarePage() {
 .hc-hero .container { position: relative; z-index: 1; }
 .hc-hero-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-16);
+    grid-template-columns: 5fr 7fr;
+    gap: var(--spacing-10);
     align-items: center;
 }
-.hc-hero-content { max-width: 560px; }
+.hc-hero-content { max-width: 520px; }
 
 /* Gold exclusivity badge */
 .hc-exclusive-badge {
@@ -785,17 +785,25 @@ export default function HealthcarePage() {
 }
 .hc-hero-visual {
     display: flex;
-    justify-content: center;
-    align-items: center;
+    justify-content: flex-end;
+    align-items: flex-end;
+    margin-right: -48px;
 }
 .hc-hero-img-wrap {
     width: 100%;
-    filter: drop-shadow(0 30px 60px rgba(0,0,0,0.12));
-    transform: perspective(1200px) rotateY(-3deg) rotateX(1deg);
-    transition: transform 0.5s ease;
+    filter:
+        drop-shadow(0 2px 0 rgba(59,130,246,0.08))
+        drop-shadow(0 30px 70px rgba(0,0,0,0.22))
+        drop-shadow(0 8px 30px rgba(59,130,246,0.14));
+    transform: perspective(1400px) rotateY(-5deg) rotateX(3deg) translateY(20px);
+    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1),
+                filter 0.6s ease;
 }
 .hc-hero-img-wrap:hover {
-    transform: perspective(1200px) rotateY(0deg) rotateX(0deg);
+    transform: perspective(1400px) rotateY(-1deg) rotateX(0deg) translateY(0px);
+    filter:
+        drop-shadow(0 40px 90px rgba(0,0,0,0.18))
+        drop-shadow(0 8px 30px rgba(59,130,246,0.1));
 }
 
 /* ==========================================
@@ -1511,7 +1519,6 @@ export default function HealthcarePage() {
 .hc-exclusivity {
     padding: var(--spacing-24) 0;
     background: #0f172a;
-    text-align: center;
 }
 .hc-excl-intro {
     font-size: var(--text-lg);
@@ -1519,6 +1526,7 @@ export default function HealthcarePage() {
     max-width: 680px;
     margin: 0 auto var(--spacing-14);
     line-height: 1.75;
+    text-align: left;
 }
 .hc-excl-intro strong {
     color: rgba(255,255,255,0.9);
@@ -1574,6 +1582,7 @@ export default function HealthcarePage() {
     color: rgba(255,255,255,0.9);
     margin-bottom: var(--spacing-3);
     letter-spacing: -0.01em;
+    text-align: center;
 }
 .hc-excl-card p {
     font-size: 14px;
@@ -1585,6 +1594,10 @@ export default function HealthcarePage() {
     font-size: var(--text-base);
     color: rgba(148,163,184,0.6);
     margin-bottom: var(--spacing-10);
+    text-align: center;
+}
+.hc-excl-cta {
+    text-align: center;
 }
 .hc-excl-cities strong { color: rgba(255,255,255,0.85); }
 .hc-cities-sep { margin: 0 10px; opacity: 0.4; }
@@ -1792,7 +1805,8 @@ export default function HealthcarePage() {
     .hc-hero-grid { grid-template-columns: 1fr; gap: var(--spacing-10); }
     .hc-hero-content { max-width: 100%; text-align: center; }
     .hc-hero-cta { justify-content: center; }
-    .hc-hero-img-wrap { transform: none; max-width: 600px; margin: 0 auto; }
+    .hc-hero-visual { margin-right: 0; justify-content: center; align-items: center; }
+    .hc-hero-img-wrap { transform: none; max-width: 700px; margin: 0 auto; filter: drop-shadow(0 24px 50px rgba(0,0,0,0.18)); }
     .hc-problems-grid { grid-template-columns: repeat(2, 1fr); }
     .hc-comparison-grid { grid-template-columns: 1fr; }
     .hc-comp-vs { writing-mode: horizontal-tb; padding: var(--spacing-4); height: auto; }
