@@ -51,7 +51,7 @@ export default function FoundersPage() {
 
             <section className="founders-section">
                 <div className="founders-container">
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '2rem', maxWidth: '896px', margin: '0 auto' }}>
+                    <div className="founders-grid-2col">
                         {founders.map((founder) => (
                             <div key={founder.name} className="founder-card-minimal">
                                 <div className="founder-avatar-wrapper">

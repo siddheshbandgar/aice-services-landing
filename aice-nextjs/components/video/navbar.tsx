@@ -69,6 +69,15 @@ export function Navbar() {
 
         <div className="absolute right-0 top-[calc(100%+0.75rem)] z-20 w-[min(18rem,calc(100vw-3rem))] overflow-hidden rounded-[1.5rem] border border-stone-800 bg-[linear-gradient(180deg,rgba(28,25,23,0.98),rgba(20,17,15,0.98))] p-3 shadow-[0_24px_60px_rgba(0,0,0,0.45)]">
           <nav className="flex flex-col">
+            <Link
+              href="/"
+              className="mb-1 flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-medium uppercase tracking-[0.18em] text-stone-600 transition hover:bg-stone-800/80 hover:text-stone-400 border-b border-stone-800/60 pb-3 mb-2"
+            >
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+              </svg>
+              aice.services
+            </Link>
             {navLinks.map((link) => (
               <Link
                 key={link.label}

@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
+import Image from 'next/image';
 import HeroSection from '@/components/HeroSection';
 import StickyScroll from '@/components/StickyScroll';
 import Testimonials from '@/components/Testimonials';
@@ -15,6 +17,99 @@ export default function Home() {
     <main>
       {/* Hero Section */}
       <HeroSection />
+
+      {/* Our Products Section */}
+      <section className="products-section section" id="products">
+        <div className="products-container">
+          <div className="products-header">
+            <span className="products-label">Live Today</span>
+            <h2 className="products-title">What we&apos;ve built</h2>
+            <p className="products-subtitle">Real products you can explore right now.</p>
+          </div>
+          <div className="products-grid">
+
+            {/* Healthcare */}
+            <Link href="/healthcare" className="product-card">
+              <div className="product-card-preview product-preview-healthcare">
+                <Image
+                  src="/healthcare/01-dashboard.png"
+                  alt="Healthcare AI Dashboard"
+                  fill
+                  style={{ objectFit: 'cover', objectPosition: 'top left' }}
+                  sizes="(max-width: 640px) 100vw, 50vw"
+                />
+                <div className="product-preview-overlay" />
+              </div>
+              <div className="product-card-content">
+                <span className="product-card-tag">Healthcare</span>
+                <div className="product-card-name">AI for Healthcare</div>
+                <div className="product-card-desc">Medical tourism, patient engagement &amp; multilingual AI agents.</div>
+                <span className="product-card-cta">Explore →</span>
+              </div>
+            </Link>
+
+            {/* Video */}
+            <Link href="/video" className="product-card">
+              <div className="product-card-preview product-preview-video">
+                <div className="product-preview-video-brand">
+                  <span className="ppv-logo">Coco<span className="ppv-dot">.</span></span>
+                  <span className="ppv-tag">AI Video Marketing</span>
+                </div>
+                <div className="ppv-reel">
+                  <span className="ppv-reel-item">Product Films</span>
+                  <span className="ppv-reel-item">Brand Stories</span>
+                  <span className="ppv-reel-item">Hero Campaigns</span>
+                </div>
+              </div>
+              <div className="product-card-content">
+                <span className="product-card-tag">Video</span>
+                <div className="product-card-name">AI Video Marketing</div>
+                <div className="product-card-desc">Cinematic product films and brand stories powered by AI.</div>
+                <span className="product-card-cta">Explore →</span>
+              </div>
+            </Link>
+
+            {/* OpenClaw */}
+            <Link href="/openclaw" className="product-card">
+              <div className="product-card-preview product-preview-openclaw">
+                <div className="ppo-content">
+                  <Image src="/logo2.svg" alt="OpenClaw" width={120} height={36} />
+                  <div className="ppo-stats">
+                    <div className="ppo-stat"><span className="ppo-stat-num">10x</span><span className="ppo-stat-label">Faster</span></div>
+                    <div className="ppo-stat"><span className="ppo-stat-num">24/7</span><span className="ppo-stat-label">Uptime</span></div>
+                    <div className="ppo-stat"><span className="ppo-stat-num">∞</span><span className="ppo-stat-label">Scale</span></div>
+                  </div>
+                </div>
+              </div>
+              <div className="product-card-content">
+                <span className="product-card-tag">Platform</span>
+                <div className="product-card-name">OpenClaw</div>
+                <div className="product-card-desc">AI-powered automation platform built for enterprise workflows.</div>
+                <span className="product-card-cta">Explore →</span>
+              </div>
+            </Link>
+
+            {/* MagicalCX */}
+            <a href="https://www.magicalcx.com/" target="_blank" rel="noreferrer" className="product-card product-card-external">
+              <div className="product-card-preview product-preview-magicalcx">
+                <div className="ppm-chat">
+                  <div className="ppm-msg ppm-bot">Hi! How can I help you today? 👋</div>
+                  <div className="ppm-msg ppm-user">I need help with my order</div>
+                  <div className="ppm-msg ppm-bot">Sure! Let me pull that up for you right away.</div>
+                  <div className="ppm-typing"><span /><span /><span /></div>
+                </div>
+              </div>
+              <div className="product-card-content">
+                <span className="product-card-tag">Customer Support</span>
+                <div className="product-card-name">MagicalCX <span className="product-card-ext-badge">↗</span></div>
+                <div className="product-card-desc">Intelligent customer support platform for modern businesses.</div>
+                <span className="product-card-cta">Visit magicalcx.com →</span>
+              </div>
+            </a>
+
+          </div>
+        </div>
+      </section>
 
       {/* What AICE Can Do - Sticky Scroll Section */}
       <StickyScroll />

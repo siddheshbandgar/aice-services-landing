@@ -44,6 +44,9 @@ export default function Navbar() {
                     <li className="nav-item">
                         <Link href="/founders" className="nav-link">Meet the Founders</Link>
                     </li>
+                    <li className="nav-item">
+                        <a href="https://aice.education" target="_blank" rel="noreferrer" className="nav-link">Education</a>
+                    </li>
                 </ul>
 
                 <div className="navbar-actions">
@@ -73,6 +76,9 @@ export default function Navbar() {
                 </div>
                 <div className="mobile-nav-item">
                     <Link href="/founders" className="mobile-nav-link" onClick={closeMobileMenu} style={{ display: 'block', padding: '12px 0', fontSize: '18px' }}>Meet the Founders</Link>
+                </div>
+                <div className="mobile-nav-item">
+                    <a href="https://aice.education" target="_blank" rel="noreferrer" className="mobile-nav-link" onClick={closeMobileMenu} style={{ display: 'block', padding: '12px 0', fontSize: '18px' }}>Education</a>
                 </div>
                 <div style={{ padding: '24px 0' }}>
                     <button className="btn btn-primary" style={{ width: '100%' }} onClick={handleMobileDemoClick}>
