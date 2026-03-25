@@ -28,13 +28,13 @@ const founders = [
         linkedin: 'https://www.linkedin.com/in/ajinkya-hazare-b59258170/',
         twitter: 'https://twitter.com/',
     },
-    /* {
+    {
         name: 'Siddhesh Bandgar',
         designation: 'Co-Founder | Product & Engineering',
-        image: '/siddhesh.jpeg',
+        image: '/founders/siddhesh.jpeg',
         linkedin: 'https://www.linkedin.com/in/siddhesh-bandgar/',
         twitter: 'https://twitter.com/',
-    }, */
+    },
 ];
 
 export default function FoundersPage() {
@@ -51,9 +51,9 @@ export default function FoundersPage() {
 
             <section className="founders-section">
                 <div className="founders-container">
-                    <div className="flex flex-wrap justify-center gap-8 max-w-6xl mx-auto">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-4xl mx-auto">
                         {founders.map((founder) => (
-                            <div key={founder.name} className="founder-card-minimal flex-shrink-0 w-[350px]">
+                            <div key={founder.name} className="founder-card-minimal">
                                 <div className="founder-avatar-wrapper">
                                     <Image
                                         src={founder.image}
