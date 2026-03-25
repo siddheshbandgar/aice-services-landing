@@ -19,21 +19,21 @@ const founders = [
         designation: 'Co-Founder | AI & Research',
         image: '/founders/hrushikesh.jpg',
         linkedin: 'https://www.linkedin.com/in/hrushikesh-kuklare/',
-        twitter: 'https://twitter.com/',
-    },
-    {
-        name: 'Ajinkya Hazare',
-        designation: 'Co-Founder | Innovation & Growth',
-        image: '/founders/ajinkya.png',
-        linkedin: 'https://www.linkedin.com/in/ajinkya-hazare-b59258170/',
-        twitter: 'https://twitter.com/',
+        twitter: 'https://x.com/0xhrushi',
     },
     {
         name: 'Siddhesh Bandgar',
         designation: 'Co-Founder | Product & Engineering',
         image: '/founders/siddhesh.jpeg',
         linkedin: 'https://www.linkedin.com/in/siddhesh-bandgar/',
-        twitter: 'https://twitter.com/',
+        twitter: 'https://x.com/SiddheshBandgar',
+    },
+    {
+        name: 'Ajinkya Hazare',
+        designation: 'Co-Founder | Innovation & Growth',
+        image: '/founders/ajinkya.png',
+        linkedin: 'https://www.linkedin.com/in/ajinkya-hazare-b59258170/',
+        twitter: 'https://x.com/ajaxx642000',
     },
 ];
 
@@ -51,7 +51,7 @@ export default function FoundersPage() {
 
             <section className="founders-section">
                 <div className="founders-container">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '2rem', maxWidth: '896px', margin: '0 auto' }}>
                         {founders.map((founder) => (
                             <div key={founder.name} className="founder-card-minimal">
                                 <div className="founder-avatar-wrapper">
