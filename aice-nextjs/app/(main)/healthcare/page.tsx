@@ -325,7 +325,7 @@ export default function HealthcarePage() {
                         <span className="hc-section-label hc-label-onlight">Data Privacy</span>
                         <h2>Your Data Stays Yours. Always.</h2>
                         <p className="hc-section-subtitle">
-                            Doctors are leaving Practo and HealthPlix for one reason. Here&apos;s the truth no one says out loud.
+                            Read your EMR&apos;s Terms of Service carefully. Here&apos;s what the fine print says — and what it means for your practice.
                         </p>
                     </div>
 
@@ -334,19 +334,19 @@ export default function HealthcarePage() {
                         <div className="hc-comp-col hc-comp-negative">
                             <div className="hc-comp-col-header hc-comp-header-neg">
                                 <span className="hc-comp-platform-badge">⚠ Practo &amp; HealthPlix</span>
-                                <h3>How Other Platforms Work</h3>
+                                <h3>What Their ToS Actually Allows</h3>
                             </div>
                             <ul className="hc-comp-list">
                                 {[
-                                    'Your patient database is used to recommend competing doctors',
-                                    'Patients searching your specialty see your competitors first',
-                                    'Your clinical data trains their algorithms — benefiting everyone else',
-                                    'You build the practice; they monetize your reputation',
-                                    'Leave the platform and your data stays with them',
+                                    { label: 'Pharma data monetisation', detail: 'HealthPlix ToS permits using your prescription & diagnosis data to generate "Real World Evidence" sold to pharma companies — without individual consent.' },
+                                    { label: 'Pay-to-rank competitor boost', detail: 'Practo\'s marketplace algorithm uses insights from your patient interactions to rank competing doctors above you when patients search your specialty.' },
+                                    { label: 'Patient poaching via SMS', detail: 'Doctors reported patients receiving competitor appointment offers within hours of booking via Practo — backed by a Change.org petition filed by Indian doctors.' },
+                                    { label: 'Call recording without notice', detail: 'All calls made through the Practo app are recorded and stored on their servers, accessible to Practo staff for "dispute resolution".' },
+                                    { label: 'No clean exit', detail: 'Your clinical data remains in their training sets and research databases even after you cancel — there is no verified deletion guarantee.' },
                                 ].map((item, i) => (
                                     <li key={i} className="hc-comp-item hc-comp-item-neg">
                                         <span className="hc-comp-icon hc-icon-x">{Icons.xCircle}</span>
-                                        <span>{item}</span>
+                                        <span><strong>{item.label}:</strong> {item.detail}</span>
                                     </li>
                                 ))}
                             </ul>
@@ -361,19 +361,19 @@ export default function HealthcarePage() {
                         <div className="hc-comp-col hc-comp-positive">
                             <div className="hc-comp-col-header hc-comp-header-pos">
                                 <span className="hc-comp-aice-badge">{Icons.shield} AICE Healthcare</span>
-                                <h3>How AICE Works</h3>
+                                <h3>Our Contractual Guarantees</h3>
                             </div>
                             <ul className="hc-comp-list">
                                 {[
-                                    'Your patient data is 100% yours — stored on isolated, encrypted infrastructure',
-                                    'We never share, sell, or use your data to benefit other doctors',
-                                    'No marketplace — we don\'t redirect your patients anywhere else',
-                                    'Full data export anytime — leave whenever you want, take everything',
-                                    'Your growth helps only you',
+                                    { label: 'Zero pharma data licensing', detail: 'We have no pharma partnerships, no research licensing deals, and no incentive to monetise your prescription patterns. Our only revenue is your subscription.' },
+                                    { label: 'Clinic-isolated infrastructure', detail: 'Each clinic runs on a logically isolated, AES-256 encrypted database. Your patient records are never co-mingled with other clinics\' data — ever.' },
+                                    { label: 'No marketplace, no ranking', detail: 'We are not a patient-facing platform. We cannot redirect your patients to competitors because we have no such product. Your relationships stay yours.' },
+                                    { label: 'Verified data deletion on exit', detail: 'Cancel anytime. Full data export provided within 48 hours + verified server-side deletion within 30 days — documented and confirmed in writing.' },
+                                    { label: 'Read-only audit log', detail: 'Every access to your patient records is logged in a tamper-proof audit trail. You can see exactly who accessed what, and when.' },
                                 ].map((item, i) => (
                                     <li key={i} className="hc-comp-item hc-comp-item-pos">
                                         <span className="hc-comp-icon hc-icon-check">{Icons.checkCircle}</span>
-                                        <span>{item}</span>
+                                        <span><strong>{item.label}:</strong> {item.detail}</span>
                                     </li>
                                 ))}
                             </ul>
@@ -382,7 +382,7 @@ export default function HealthcarePage() {
 
                     <div className="hc-trust-statement hc-reveal">
                         <div className="hc-trust-shield">{Icons.lock}</div>
-                        <p>&ldquo;We make money from our platform fee, not from your data.<br />That&apos;s the difference.&rdquo;</p>
+                        <p>&ldquo;We make money from our platform fee, not from your data.<br />That&apos;s the only business model where your interests and ours are aligned.&rdquo;</p>
                     </div>
                 </div>
             </section>
@@ -1113,24 +1113,37 @@ export default function HealthcarePage() {
 .hc-comp-list {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-4);
+    gap: var(--spacing-5);
 }
 .hc-comp-item {
     display: flex;
     align-items: flex-start;
     gap: var(--spacing-3);
-    font-size: 14px;
-    line-height: 1.55;
+    font-size: 13.5px;
+    line-height: 1.6;
+}
+.hc-comp-item strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    margin-bottom: 2px;
 }
 .hc-comp-item-neg {
-    color: rgba(203,213,225,0.55);
+    color: rgba(203,213,225,0.6);
+}
+.hc-comp-item-neg strong {
+    color: rgba(248,113,113,0.9);
 }
 .hc-comp-item-pos {
     color: var(--color-text-secondary);
 }
+.hc-comp-item-pos strong {
+    color: #22c55e;
+}
 .hc-comp-icon {
     flex-shrink: 0;
-    margin-top: 1px;
+    margin-top: 3px;
 }
 .hc-icon-x { color: #f87171; }
 .hc-icon-check { color: #22c55e; }
