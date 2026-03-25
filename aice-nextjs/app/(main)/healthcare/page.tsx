@@ -338,15 +338,15 @@ export default function HealthcarePage() {
                             </div>
                             <ul className="hc-comp-list">
                                 {[
-                                    { label: 'Pharma data monetisation', detail: 'HealthPlix ToS permits using your prescription & diagnosis data to generate "Real World Evidence" sold to pharma companies — without individual consent.' },
-                                    { label: 'Pay-to-rank competitor boost', detail: 'Practo\'s marketplace algorithm uses insights from your patient interactions to rank competing doctors above you when patients search your specialty.' },
-                                    { label: 'Patient poaching via SMS', detail: 'Doctors reported patients receiving competitor appointment offers within hours of booking via Practo — backed by a Change.org petition filed by Indian doctors.' },
-                                    { label: 'Call recording without notice', detail: 'All calls made through the Practo app are recorded and stored on their servers, accessible to Practo staff for "dispute resolution".' },
-                                    { label: 'No clean exit', detail: 'Your clinical data remains in their training sets and research databases even after you cancel — there is no verified deletion guarantee.' },
+                                    'Your prescription data sold to pharma as "Real World Evidence"',
+                                    'Competing doctors boosted using insights from your patients',
+                                    'Patients poached via SMS after booking at your clinic',
+                                    'All in-app calls recorded and stored on their servers',
+                                    'Your data stays with them even after you cancel',
                                 ].map((item, i) => (
                                     <li key={i} className="hc-comp-item hc-comp-item-neg">
                                         <span className="hc-comp-icon hc-icon-x">{Icons.xCircle}</span>
-                                        <span><strong>{item.label}:</strong> {item.detail}</span>
+                                        <span>{item}</span>
                                     </li>
                                 ))}
                             </ul>
@@ -365,15 +365,15 @@ export default function HealthcarePage() {
                             </div>
                             <ul className="hc-comp-list">
                                 {[
-                                    { label: 'Zero pharma data licensing', detail: 'We have no pharma partnerships, no research licensing deals, and no incentive to monetise your prescription patterns. Our only revenue is your subscription.' },
-                                    { label: 'Clinic-isolated infrastructure', detail: 'Each clinic runs on a logically isolated, AES-256 encrypted database. Your patient records are never co-mingled with other clinics\' data — ever.' },
-                                    { label: 'No marketplace, no ranking', detail: 'We are not a patient-facing platform. We cannot redirect your patients to competitors because we have no such product. Your relationships stay yours.' },
-                                    { label: 'Verified data deletion on exit', detail: 'Cancel anytime. Full data export provided within 48 hours + verified server-side deletion within 30 days — documented and confirmed in writing.' },
-                                    { label: 'Read-only audit log', detail: 'Every access to your patient records is logged in a tamper-proof audit trail. You can see exactly who accessed what, and when.' },
+                                    'Zero pharma data deals. Your prescriptions stay private.',
+                                    'AES-256 encrypted, clinic-isolated database',
+                                    'No marketplace. Your patients cannot be redirected.',
+                                    'Full export and verified deletion within 30 days of cancellation',
+                                    'Tamper-proof audit log on every record access',
                                 ].map((item, i) => (
                                     <li key={i} className="hc-comp-item hc-comp-item-pos">
                                         <span className="hc-comp-icon hc-icon-check">{Icons.checkCircle}</span>
-                                        <span><strong>{item.label}:</strong> {item.detail}</span>
+                                        <span>{item}</span>
                                     </li>
                                 ))}
                             </ul>
@@ -1113,37 +1113,24 @@ export default function HealthcarePage() {
 .hc-comp-list {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-5);
+    gap: var(--spacing-4);
 }
 .hc-comp-item {
     display: flex;
     align-items: flex-start;
     gap: var(--spacing-3);
-    font-size: 13.5px;
-    line-height: 1.6;
-}
-.hc-comp-item strong {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    margin-bottom: 2px;
+    font-size: 14px;
+    line-height: 1.55;
 }
 .hc-comp-item-neg {
-    color: rgba(203,213,225,0.6);
-}
-.hc-comp-item-neg strong {
-    color: rgba(248,113,113,0.9);
+    color: rgba(203,213,225,0.7);
 }
 .hc-comp-item-pos {
     color: var(--color-text-secondary);
 }
-.hc-comp-item-pos strong {
-    color: #22c55e;
-}
 .hc-comp-icon {
     flex-shrink: 0;
-    margin-top: 3px;
+    margin-top: 2px;
 }
 .hc-icon-x { color: #f87171; }
 .hc-icon-check { color: #22c55e; }
