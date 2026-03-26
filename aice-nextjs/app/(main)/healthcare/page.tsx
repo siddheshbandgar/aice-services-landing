@@ -254,7 +254,7 @@ export default function HealthcarePage() {
                             </p>
                             <div className="hc-hero-cta">
                                 <a
-                                    href="https://wa.me/919959953888?text=Hi%2C%20I%27d%20like%20to%20apply%20for%20access%20to%20AICE%20Healthcare"
+                                    href="https://wa.me/918956366659?text=Hi%2C%20I%27d%20like%20to%20apply%20for%20access%20to%20AICE%20Healthcare"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="btn btn-primary btn-lg"
@@ -471,13 +471,6 @@ export default function HealthcarePage() {
                         <h2>See It In Action</h2>
                         <p className="hc-section-subtitle">Watch how AICE transforms a clinic&apos;s daily operations in 90 seconds.</p>
                     </div>
-                    <div className="hc-video-wrapper hc-reveal">
-                        {/* REPLACE: Product walkthrough video */}
-                        <div className="hc-video-placeholder">
-                            <div className="hc-video-play">{Icons.play}</div>
-                            <span className="hc-video-text">Product Walkthrough — Coming Soon</span>
-                        </div>
-                    </div>
                     <div className="hc-video-cta">
                         <a href="https://arna-leadgen-crm-emr.vercel.app/dashboard" target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-lg">
                             Try the Live Demo Yourself {Icons.arrowRight}
@@ -579,7 +572,7 @@ export default function HealthcarePage() {
                     </div>
                     <div className="hc-excl-cta hc-reveal">
                         <a
-                            href="https://wa.me/919959953888?text=Hi%2C%20I%27d%20like%20to%20apply%20for%20access%20to%20AICE%20Healthcare"
+                            href="https://wa.me/918956366659?text=Hi%2C%20I%27d%20like%20to%20apply%20for%20access%20to%20AICE%20Healthcare"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="btn btn-primary btn-lg"
@@ -670,7 +663,7 @@ export default function HealthcarePage() {
                     <div className="hc-pricing-footer hc-reveal">
                         <p>All plans include a <strong>2-week complimentary trial</strong>. Apply to discuss pricing with our team.</p>
                         <a
-                            href="https://wa.me/919959953888?text=Hi%2C%20I%27d%20like%20to%20apply%20for%20access%20to%20AICE%20Healthcare"
+                            href="https://wa.me/918956366659?text=Hi%2C%20I%27d%20like%20to%20apply%20for%20access%20to%20AICE%20Healthcare"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="btn btn-primary btn-lg"
@@ -689,7 +682,7 @@ export default function HealthcarePage() {
                             <h3>Ready to Join the Top 100?</h3>
                             <p>Apply for early access to AICE Healthcare in your city. Limited spots available.</p>
                             <a
-                                href="https://wa.me/919959953888?text=Hi%2C%20I%27d%20like%20to%20apply%20for%20access%20to%20AICE%20Healthcare"
+                                href="https://wa.me/918956366659?text=Hi%2C%20I%27d%20like%20to%20apply%20for%20access%20to%20AICE%20Healthcare"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="btn btn-primary btn-lg"
@@ -701,7 +694,7 @@ export default function HealthcarePage() {
                             <h3>Have Questions?</h3>
                             <p>Our team is available on WhatsApp. No sales pitch — just honest answers about whether this is right for your clinic.</p>
                             <a
-                                href="https://wa.me/919959953888"
+                                href="https://wa.me/918956366659"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="hc-wa-btn"
