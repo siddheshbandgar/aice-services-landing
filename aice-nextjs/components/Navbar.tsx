@@ -50,6 +50,7 @@ export default function Navbar() {
                 </ul>
 
                 <div className="navbar-actions">
+                    <Link href="/hackathon" className="btn btn-secondary" style={{ fontSize: '0.85rem', padding: '0.5rem 1.1rem' }}>Hackathon</Link>
                     <button className="btn btn-primary" onClick={openModal}>Book a Demo</button>
                 </div>
 
