@@ -76,6 +76,9 @@ export default function Navbar() {
                     <Link href="/openclaw" className="mobile-nav-link" onClick={closeMobileMenu} style={{ display: 'block', padding: '12px 0', fontSize: '18px' }}>OpenClaw</Link>
                 </div>
                 <div className="mobile-nav-item">
+                    <Link href="/hackathon" className="mobile-nav-link" onClick={closeMobileMenu} style={{ display: 'block', padding: '12px 0', fontSize: '18px' }}>Hackathon</Link>
+                </div>
+                <div className="mobile-nav-item">
                     <Link href="/founders" className="mobile-nav-link" onClick={closeMobileMenu} style={{ display: 'block', padding: '12px 0', fontSize: '18px' }}>Meet the Founders</Link>
                 </div>
                 <div className="mobile-nav-item">
