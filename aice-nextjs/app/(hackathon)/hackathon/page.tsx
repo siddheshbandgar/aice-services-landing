@@ -4,6 +4,23 @@ import { useEffect } from 'react';
 
 export default function HackathonPage() {
 
+    // Theme toggle (light mode default)
+    useEffect(() => {
+        const saved = localStorage.getItem('hackathon-theme');
+        const isDark = saved === 'dark';
+        if (!isDark) document.body.classList.add('light-mode');
+        const btn = document.getElementById('themeToggle');
+        if (!btn) return;
+        btn.textContent = isDark ? '☀️' : '🌙';
+        const toggle = () => {
+            const isLight = document.body.classList.toggle('light-mode');
+            localStorage.setItem('hackathon-theme', isLight ? 'light' : 'dark');
+            btn.textContent = isLight ? '🌙' : '☀️';
+        };
+        btn.addEventListener('click', toggle);
+        return () => btn.removeEventListener('click', toggle);
+    }, []);
+
     // Nav scroll
     useEffect(() => {
         const nav = document.getElementById('navbar');
@@ -438,6 +455,50 @@ export default function HackathonPage() {
 
                 .reveal { opacity: 0; transform: translateY(30px); transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
                 .reveal.visible { opacity: 1; transform: translateY(0); }
+
+                /* Light mode */
+                body.light-mode {
+                    --bg: #f5f5f3; --bg-card: #ffffff; --bg-card-hover: #efefec;
+                    --border: #e0e0db; --border-highlight: #ccccbf;
+                    --text: #111111; --text-secondary: #555555; --text-muted: #888888;
+                    --accent: #527a00; --accent-dim: rgba(82,122,0,0.1); --accent-glow: rgba(82,122,0,0.3);
+                }
+                body.light-mode { background: var(--bg); color: var(--text); }
+                body.light-mode nav { background: rgba(245,245,243,0.88) !important; }
+                body.light-mode nav.scrolled { background: rgba(245,245,243,0.97) !important; }
+                body.light-mode .nav-links.open { background: rgba(245,245,243,0.99); }
+                body.light-mode .stacked-panels-wrap { opacity: 0.1; }
+                body.light-mode .hero-bg { background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(82,122,0,0.07) 0%, transparent 60%); }
+                body.light-mode .hero-grid { background-image: linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px); }
+                body.light-mode .stat-number { background: linear-gradient(135deg, var(--accent), #3d5c00); -webkit-background-clip: text; background-clip: text; }
+                body.light-mode .hero h1 .highlight { background: linear-gradient(135deg, var(--accent), #3d5c00); -webkit-background-clip: text; background-clip: text; }
+                .theme-btn { background: none; border: 1px solid var(--border-highlight); border-radius: 8px; cursor: pointer; padding: 0.4rem 0.65rem; font-size: 1rem; line-height: 1; transition: all 0.2s; color: var(--text); }
+                .theme-btn:hover { border-color: var(--accent); }
+
+                /* Commission section */
+                .commission-section { border-top: 1px solid var(--border); }
+                .commission-tiers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-top: 3rem; }
+                .tier-card { padding: 2rem; border: 1px solid var(--border); border-radius: 16px; background: var(--bg-card); text-align: center; position: relative; overflow: hidden; transition: all 0.3s ease; }
+                .tier-card:hover { border-color: var(--border-highlight); transform: translateY(-2px); }
+                .tier-card-highlight { border-color: rgba(180,242,64,0.35) !important; }
+                body.light-mode .tier-card-highlight { border-color: rgba(82,122,0,0.35) !important; }
+                .tier-card-highlight::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), transparent); }
+                .tier-badge { display: inline-block; padding: 0.3rem 0.9rem; border: 1px solid var(--border-highlight); border-radius: 100px; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1.25rem; }
+                .tier-rate { font-size: 3.5rem; font-weight: 800; letter-spacing: -0.04em; color: var(--accent); line-height: 1; margin-bottom: 0.4rem; }
+                .tier-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1.5rem; }
+                .tier-example { font-size: 0.875rem; color: var(--text-secondary); line-height: 1.55; padding: 0.85rem 1rem; border: 1px solid var(--border); border-radius: 10px; background: rgba(180,242,64,0.04); }
+                body.light-mode .tier-example { background: rgba(82,122,0,0.05); }
+                .tier-example strong { color: var(--text); }
+                .commission-math { margin-top: 3rem; border: 1px solid var(--border); border-radius: 16px; background: var(--bg-card); overflow: hidden; }
+                .commission-math-title { padding: 1.25rem 2rem; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); }
+                .commission-row { display: grid; grid-template-columns: 1fr auto; gap: 1rem; padding: 1.1rem 2rem; border-bottom: 1px solid var(--border); align-items: center; font-size: 0.9rem; color: var(--text-secondary); }
+                .commission-row:last-child { border-bottom: none; }
+                .commission-row-total { background: rgba(180,242,64,0.06); color: var(--text); font-weight: 600; }
+                body.light-mode .commission-row-total { background: rgba(82,122,0,0.07); }
+                .commission-row-annual { color: var(--text); }
+                .commission-amount strong { color: var(--accent); }
+                .commission-note { margin: 1.5rem 2rem; font-size: 0.78rem; color: var(--text-muted); line-height: 1.65; font-style: italic; }
+                @media (max-width: 768px) { .commission-tiers { grid-template-columns: 1fr; } .commission-row { grid-template-columns: 1fr; gap: 0.25rem; } .commission-math-title, .commission-row { padding: 1rem 1.25rem; } .commission-note { margin: 1rem 1.25rem; } }
             `}</style>
 
             {/* Nav */}
@@ -449,6 +510,7 @@ export default function HackathonPage() {
                 </a>
                 <ul className="nav-links" id="navLinks">
                     <li><a href="#deal">The Deal</a></li>
+                    <li><a href="#commission">Commission</a></li>
                     <li><a href="#product">The Product</a></li>
                     <li><a href="#scope">Scope</a></li>
                     <li><a href="#schedule">Schedule</a></li>
@@ -460,9 +522,12 @@ export default function HackathonPage() {
                     </li>
                     <li><a href="https://app.youform.com/forms/nn4bbvki" target="_blank" rel="noopener noreferrer" className="btn-apply-nav">Apply Now →</a></li>
                 </ul>
-                <button className="hamburger" id="hamburger" aria-label="Toggle menu">
-                    <span></span><span></span><span></span>
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <button id="themeToggle" className="theme-btn" aria-label="Toggle light/dark mode">☀️</button>
+                    <button className="hamburger" id="hamburger" aria-label="Toggle menu">
+                        <span></span><span></span><span></span>
+                    </button>
+                </div>
             </nav>
 
             {/* Hero */}
@@ -477,8 +542,8 @@ export default function HackathonPage() {
                     </div>
                     <h1>Sell. Close. <span className="highlight">Earn for life.</span></h1>
                     <p className="hero-sub">
-                        8 hours. 20 seats. One AI product. Sell Magical CX at the hackathon and earn{' '}
-                        <strong>20% lifetime recurring commission</strong> on every deal you lock in.
+                        8 hours. 30 seats. One AI product. Sell Magical CX at the hackathon and earn{' '}
+                        <strong>up to 20% lifetime recurring commission</strong> on every deal you lock in.
                     </p>
                     <div className="hero-meta">
                         <div className="hero-meta-item">
@@ -491,11 +556,11 @@ export default function HackathonPage() {
                         </div>
                         <div className="hero-meta-item">
                             <div className="hero-meta-label">Venue</div>
-                            <div className="hero-meta-value">Skyview 10, Gachibowli</div>
+                            <div className="hero-meta-value">CoKarma Kothaguda</div>
                         </div>
                         <div className="hero-meta-item">
                             <div className="hero-meta-label">Seats</div>
-                            <div className="hero-meta-value">20 Only</div>
+                            <div className="hero-meta-value">30 Only</div>
                         </div>
                     </div>
                     <div className="hero-cta">
@@ -508,9 +573,9 @@ export default function HackathonPage() {
             {/* Stats */}
             <div className="stat-banner">
                 <div className="stat-grid">
-                    <div><div className="stat-number">20%</div><div className="stat-label">Lifetime Commission</div></div>
+                    <div><div className="stat-number">10→20%</div><div className="stat-label">Lifetime Commission</div></div>
                     <div><div className="stat-number">8hrs</div><div className="stat-label">Sales Sprint</div></div>
-                    <div><div className="stat-number">20</div><div className="stat-label">Seats Only</div></div>
+                    <div><div className="stat-number">30</div><div className="stat-label">Seats Only</div></div>
                     <div><div className="stat-number">∞</div><div className="stat-label">Recurring Revenue</div></div>
                 </div>
             </div>
@@ -526,8 +591,8 @@ export default function HackathonPage() {
                             <div className="deal-card-icon">
                                 <svg className="icon-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                             </div>
-                            <h3>20% Lifetime Commission</h3>
-                            <p>Every deal you close earns you 20% recurring revenue for the lifetime of that customer. Your client, your income stream.</p>
+                            <h3>Up to 20% Lifetime Commission</h3>
+                            <p>Your commission grows with every sale. Start at 10%, hit 15% after your 5th close, and unlock 20% after your 10th. Every deal earns its rate forever — your clients, your income stream, for life.</p>
                         </div>
                         <div className="deal-card">
                             <div className="deal-card-icon">
@@ -551,6 +616,91 @@ export default function HackathonPage() {
                             <p>Come alone or bring a team. Stronger the team, more deals you crack. We&apos;ll pair solo players with other hustlers in the room.</p>
                         </div>
                     </div>
+                </div>
+            </section>
+
+            {/* Commission Breakdown */}
+            <section className="commission-section" id="commission">
+                <div className="container reveal">
+                    <div className="section-label">Commission Structure</div>
+                    <h2 className="section-title">Earn more as you sell more</h2>
+                    <p className="section-desc">Your rate is locked in per sale — every new client you close earns you a higher rate. Lifetime. Recurring. Forever.</p>
+
+                    <div className="commission-tiers">
+                        <div className="tier-card">
+                            <div className="tier-badge">0 – 5 Clients</div>
+                            <div className="tier-rate">10%</div>
+                            <div className="tier-label">Commission on Sale · Forever</div>
+                            <div className="tier-example">
+                                Annual plan (₹9,999/mo) → <strong>₹1,000/mo</strong> per client<br />
+                                Monthly plan (₹13,999/mo) → <strong>₹1,400/mo</strong> per client
+                            </div>
+                        </div>
+                        <div className="tier-card">
+                            <div className="tier-badge">6 – 9 Clients</div>
+                            <div className="tier-rate">15%</div>
+                            <div className="tier-label">Commission on Sale · Forever</div>
+                            <div className="tier-example">
+                                Annual plan (₹9,999/mo) → <strong>₹1,500/mo</strong> per client<br />
+                                Monthly plan (₹13,999/mo) → <strong>₹2,100/mo</strong> per client
+                            </div>
+                        </div>
+                        <div className="tier-card tier-card-highlight">
+                            <div className="tier-badge">10+ Clients</div>
+                            <div className="tier-rate">20%</div>
+                            <div className="tier-label">Commission on Sale · Forever</div>
+                            <div className="tier-example">
+                                Annual plan (₹9,999/mo) → <strong>₹2,000/mo</strong> per client<br />
+                                Monthly plan (₹13,999/mo) → <strong>₹2,800/mo</strong> per client
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Wow number */}
+                    <div style={{ textAlign: 'center', margin: '3.5rem 0 2.5rem', padding: '2.5rem', border: '1px solid rgba(180,242,64,0.2)', borderRadius: '20px', background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(180,242,64,0.06), transparent 70%)' }}>
+                        <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--accent)', fontWeight: 600, marginBottom: '0.75rem' }}>Close 15 clients on annual plans</div>
+                        <div style={{ fontSize: 'clamp(3rem, 8vw, 6rem)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1, background: 'linear-gradient(135deg, var(--accent), #d4ff70)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>₹23,000<span style={{ fontSize: '40%', fontWeight: 600 }}>/month</span></div>
+                        <div style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginTop: '0.75rem' }}>That&apos;s <strong style={{ color: 'var(--text)' }}>₹2,76,000/year</strong> — passive, recurring, in your account every month, forever.</div>
+                    </div>
+
+                    {/* Three plan breakdowns */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                        {/* Annual Plan */}
+                        <div style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--bg-card)', overflow: 'hidden' }}>
+                            <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border)', background: 'rgba(255,255,255,0.02)' }}>
+                                <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', fontWeight: 600 }}>Annual Plan — ₹9,999/month</div>
+                            </div>
+                            <div className="commission-row"><span>5 clients × 10% × ₹9,999</span><span className="commission-amount"><strong>₹5,000/mo</strong></span></div>
+                            <div className="commission-row"><span>4 clients × 15% × ₹9,999</span><span className="commission-amount"><strong>₹6,000/mo</strong></span></div>
+                            <div className="commission-row"><span>6 clients × 20% × ₹9,999</span><span className="commission-amount"><strong>₹12,000/mo</strong></span></div>
+                            <div className="commission-row commission-row-total"><span>Total — 15 clients</span><span className="commission-amount"><strong>₹23,000/mo</strong></span></div>
+                            <div className="commission-row commission-row-annual"><span>Per year</span><span className="commission-amount"><strong>₹2,76,000/yr</strong></span></div>
+                        </div>
+                        {/* Monthly Plan */}
+                        <div style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--bg-card)', overflow: 'hidden' }}>
+                            <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border)', background: 'rgba(255,255,255,0.02)' }}>
+                                <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', fontWeight: 600 }}>Monthly Plan — ₹13,999/month</div>
+                            </div>
+                            <div className="commission-row"><span>5 clients × 10% × ₹13,999</span><span className="commission-amount"><strong>₹7,000/mo</strong></span></div>
+                            <div className="commission-row"><span>4 clients × 15% × ₹13,999</span><span className="commission-amount"><strong>₹8,400/mo</strong></span></div>
+                            <div className="commission-row"><span>6 clients × 20% × ₹13,999</span><span className="commission-amount"><strong>₹16,800/mo</strong></span></div>
+                            <div className="commission-row commission-row-total"><span>Total — 15 clients</span><span className="commission-amount"><strong>₹32,200/mo</strong></span></div>
+                            <div className="commission-row commission-row-annual"><span>Per year</span><span className="commission-amount"><strong>₹3,86,400/yr</strong></span></div>
+                        </div>
+                        {/* Lifetime Deal */}
+                        <div style={{ border: '1px solid var(--border)', borderRadius: 16, background: 'var(--bg-card)', overflow: 'hidden' }}>
+                            <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid var(--border)', background: 'rgba(255,255,255,0.02)' }}>
+                                <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', fontWeight: 600 }}>Lifetime Deal — ₹40,000 one-time</div>
+                            </div>
+                            <div className="commission-row"><span>5 deals × 10% × ₹40,000</span><span className="commission-amount"><strong>₹20,000</strong></span></div>
+                            <div className="commission-row"><span>4 deals × 15% × ₹40,000</span><span className="commission-amount"><strong>₹24,000</strong></span></div>
+                            <div className="commission-row"><span>6 deals × 20% × ₹40,000</span><span className="commission-amount"><strong>₹48,000</strong></span></div>
+                            <div className="commission-row commission-row-total"><span>Total — 15 deals</span><span className="commission-amount"><strong>₹92,000</strong></span></div>
+                            <div className="commission-row commission-row-annual"><span>One-time payout</span><span className="commission-amount" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>+ monthly recurring on any upgrades</span></div>
+                        </div>
+                    </div>
+
+                    <p className="commission-note" style={{ marginTop: '1.5rem' }}>* Commission rate is locked per sale — your 7th client earns you 15% from them forever, even after you cross 10 total sales. Mix of plan types is common; the above scenarios use one plan type for clarity.</p>
                 </div>
             </section>
 
@@ -749,13 +899,12 @@ export default function HackathonPage() {
                 <div className="container reveal">
                     <div className="section-label">How We Score</div>
                     <h2 className="section-title">Point system</h2>
-                    <p className="section-desc">Deals won&apos;t always close in 5 hours. That&apos;s why we score on leading indicators — every action moves you up the leaderboard.</p>
+                    <p className="section-desc">3 actions. Clear scores. A booked demo, a live demo, a closed deal — each one moves you up the leaderboard and closer to the top prize.</p>
                     <div className="scoring-table">
                         <div className="scoring-row header"><span>Action</span><span>Points</span><span>Verification</span></div>
-                        <div className="scoring-row"><span className="scoring-action">Qualified Lead Generated</span><span className="scoring-points">10 pts</span><span className="scoring-verify">Name, phone, and verified pain point</span></div>
-                        <div className="scoring-row"><span className="scoring-action">Demo Booked</span><span className="scoring-points">50 pts</span><span className="scoring-verify">Calendar invite accepted by the prospect</span></div>
-                        <div className="scoring-row"><span className="scoring-action">Live Demo Delivered</span><span className="scoring-points">100 pts</span><span className="scoring-verify">Prospect on a live Zoom/call during the hackathon</span></div>
-                        <div className="scoring-row"><span className="scoring-action">Deal Closed / Payment Made</span><span className="scoring-points">500 pts</span><span className="scoring-verify">Payment confirmation or signed agreement</span></div>
+                        <div className="scoring-row"><span className="scoring-action">Demo Call Booked for the Client</span><span className="scoring-points">100 pts</span><span className="scoring-verify">Calendar invite confirmed and accepted by the prospect</span></div>
+                        <div className="scoring-row"><span className="scoring-action">Demo Call Occurred During the 4 Hours</span><span className="scoring-points">200 pts</span><span className="scoring-verify">Prospect on a live call/demo during the hackathon window</span></div>
+                        <div className="scoring-row"><span className="scoring-action">Client Purchases the Product</span><span className="scoring-points">1000 pts</span><span className="scoring-verify">Payment confirmation or signed agreement received</span></div>
                     </div>
                 </div>
             </section>
@@ -802,13 +951,13 @@ export default function HackathonPage() {
             {/* CTA */}
             <section className="cta-section" id="apply">
                 <div className="container reveal">
-                    <div className="section-label">Limited to 20 Seats</div>
+                    <div className="section-label">Limited to 30 Seats</div>
                     <h2 className="section-title">Resumes are dead.<br />Proof of Work is everything.</h2>
                     <p className="section-desc">Show us what you&apos;ve built, sold, or shipped. A link, a screenshot, anything real. That&apos;s your ticket in.</p>
                     <div className="cta-details">
                         <div className="cta-detail">
                             <svg className="icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
-                            Skyview 10, Gachibowli
+                            CoKarma Kothaguda
                         </div>
                         <div className="cta-detail">
                             <svg className="icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
