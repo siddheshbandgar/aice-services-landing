@@ -36,6 +36,9 @@ export default function Navbar() {
                         <Link href="/healthcare" className="nav-link">Healthcare</Link>
                     </li>
                     <li className="nav-item">
+                        <Link href="/voice" className="nav-link">Voice</Link>
+                    </li>
+                    <li className="nav-item">
                         <Link href="/video" className="nav-link">Video</Link>
                     </li>
                     <li className="nav-item">
@@ -68,6 +71,9 @@ export default function Navbar() {
             <div className={`mobile-menu ${mobileMenuOpen ? 'active' : ''}`}>
                 <div className="mobile-nav-item">
                     <Link href="/healthcare" className="mobile-nav-link" onClick={closeMobileMenu} style={{ display: 'block', padding: '12px 0', fontSize: '18px' }}>Healthcare</Link>
+                </div>
+                <div className="mobile-nav-item">
+                    <Link href="/voice" className="mobile-nav-link" onClick={closeMobileMenu} style={{ display: 'block', padding: '12px 0', fontSize: '18px' }}>Voice</Link>
                 </div>
                 <div className="mobile-nav-item">
                     <Link href="/video" className="mobile-nav-link" onClick={closeMobileMenu} style={{ display: 'block', padding: '12px 0', fontSize: '18px' }}>Video</Link>

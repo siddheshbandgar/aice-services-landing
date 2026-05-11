@@ -48,6 +48,27 @@ export default function Home() {
               </div>
             </Link>
 
+            {/* Voice */}
+            <Link href="/voice" className="product-card">
+              <div className="product-card-preview product-preview-voice">
+                <div className="ppvo-content">
+                  <div className="ppvo-waves">
+                    <span /><span /><span /><span /><span /><span /><span /><span />
+                  </div>
+                  <div className="ppvo-label">
+                    <span className="ppvo-dot" />
+                    Live Call · AI Agent
+                  </div>
+                </div>
+              </div>
+              <div className="product-card-content">
+                <span className="product-card-tag">Voice</span>
+                <div className="product-card-name">AI Voice Agents</div>
+                <div className="product-card-desc">Inbound &amp; outbound voice agents for bookings, lead qualification, and support.</div>
+                <span className="product-card-cta">Explore →</span>
+              </div>
+            </Link>
+
             {/* Video */}
             <Link href="/video" className="product-card">
               <div className="product-card-preview product-preview-video">

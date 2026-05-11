@@ -4191,6 +4191,97 @@ div[data-widget],
     text-decoration: underline;
 }
 
+/* Voice — animated waveform on deep blue */
+.product-preview-voice {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1E40AF 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.product-preview-voice::before {
+    content: "";
+    position: absolute;
+    inset: -50%;
+    background: radial-gradient(circle at 50% 50%, rgba(96,165,250,0.25) 0%, transparent 60%);
+    animation: ppvo-glow 5s ease-in-out infinite;
+}
+
+@keyframes ppvo-glow {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.1); }
+}
+
+.ppvo-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+}
+
+.ppvo-waves {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    height: 56px;
+}
+
+.ppvo-waves span {
+    display: block;
+    width: 4px;
+    background: linear-gradient(180deg, #93c5fd 0%, #60a5fa 100%);
+    border-radius: 4px;
+    animation: ppvo-wave 1.1s ease-in-out infinite;
+    box-shadow: 0 0 12px rgba(147,197,253,0.5);
+}
+
+.ppvo-waves span:nth-child(1) { animation-delay: 0s; height: 30%; }
+.ppvo-waves span:nth-child(2) { animation-delay: 0.1s; height: 65%; }
+.ppvo-waves span:nth-child(3) { animation-delay: 0.2s; height: 95%; }
+.ppvo-waves span:nth-child(4) { animation-delay: 0.3s; height: 50%; }
+.ppvo-waves span:nth-child(5) { animation-delay: 0.4s; height: 80%; }
+.ppvo-waves span:nth-child(6) { animation-delay: 0.5s; height: 40%; }
+.ppvo-waves span:nth-child(7) { animation-delay: 0.6s; height: 70%; }
+.ppvo-waves span:nth-child(8) { animation-delay: 0.7s; height: 25%; }
+
+@keyframes ppvo-wave {
+    0%, 100% { transform: scaleY(0.4); }
+    50% { transform: scaleY(1.2); }
+}
+
+.ppvo-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #dbeafe;
+}
+
+.ppvo-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ef4444;
+    animation: ppvo-blink 1.4s ease-in-out infinite;
+}
+
+@keyframes ppvo-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
 @media (max-width: 768px) {
     .products-grid {
         grid-template-columns: 1fr;
