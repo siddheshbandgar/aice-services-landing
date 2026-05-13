@@ -85,16 +85,19 @@ function ReelCard({
     isActive,
     fullscreen,
     onToggleFullscreen,
+    audioOn,
+    onToggleAudio,
 }: {
     demo: Demo;
     index: number;
     isActive: boolean;
     fullscreen: boolean;
     onToggleFullscreen: () => void;
+    audioOn: boolean;
+    onToggleAudio: () => void;
 }) {
     const { openModal } = useModal();
     const iframeRef = useRef<HTMLIFrameElement>(null);
-    const [muted, setMuted] = useState(true);
     const [playing, setPlaying] = useState(false);
     const [controlsVisible, setControlsVisible] = useState(true);
     const [liked, setLiked] = useState(false);
@@ -121,13 +124,14 @@ function ReelCard({
         if (isActive) {
             const t = setTimeout(() => {
                 sendYT('playVideo');
-                if (!muted) sendYT('unMute');
+                sendYT(audioOn ? 'unMute' : 'mute');
                 setPlaying(true);
                 scheduleHide();
             }, 400);
             return () => clearTimeout(t);
         } else {
             sendYT('pauseVideo');
+            sendYT('mute'); // inactive reels never play audio
             setPlaying(false);
             setControlsVisible(true);
             clearTimeout(hideTimer.current);
@@ -135,10 +139,12 @@ function ReelCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isActive]);
 
+    /* React to global audio toggle for the active reel */
     useEffect(() => {
-        sendYT(muted ? 'mute' : 'unMute');
+        if (!isActive) return;
+        sendYT(audioOn ? 'unMute' : 'mute');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [muted]);
+    }, [audioOn, isActive]);
 
     /* Cleanup timers on unmount */
     useEffect(() => () => {
@@ -308,18 +314,18 @@ function ReelCard({
                 <div className="ig-top-actions">
                     <button
                         className="ig-icon-btn"
-                        onClick={(e) => { e.stopPropagation(); setMuted((m) => !m); }}
-                        aria-label={muted ? 'Unmute' : 'Mute'}
+                        onClick={(e) => { e.stopPropagation(); onToggleAudio(); }}
+                        aria-label={audioOn ? 'Mute' : 'Unmute'}
                     >
-                        {muted ? (
+                        {audioOn ? (
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                                <line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" />
+                                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
                             </svg>
                         ) : (
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                                <line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" />
                             </svg>
                         )}
                     </button>
@@ -395,7 +401,7 @@ function ReelCard({
                 <div className="ig-reel-title">{demo.title}</div>
                 <div className="ig-reel-tagline">{demo.tagline}</div>
                 <div className="ig-vinyl-row">
-                    <div className={`ig-vinyl ${muted ? 'ig-vinyl-paused' : ''}`}>🎵</div>
+                    <div className={`ig-vinyl ${audioOn ? '' : 'ig-vinyl-paused'}`}>🎵</div>
                 </div>
             </div>
 
@@ -419,6 +425,42 @@ export default function VoicePage() {
     const sceneRef = useRef<HTMLDivElement>(null);
     const [active, setActive] = useState(0);
     const [fullscreen, setFullscreen] = useState(false);
+    const [audioOn, setAudioOn] = useState(false);
+    const [inReels, setInReels] = useState(false);
+    const userInteracted = useRef(false);
+    const userOverrode = useRef(false);
+
+    /* Track first user gesture — browsers block autoplay-with-sound until then */
+    useEffect(() => {
+        const onInteract = () => { userInteracted.current = true; };
+        window.addEventListener('pointerdown', onInteract, { once: true, passive: true });
+        window.addEventListener('keydown', onInteract, { once: true });
+        window.addEventListener('wheel', onInteract, { once: true, passive: true });
+        window.addEventListener('touchstart', onInteract, { once: true, passive: true });
+        return () => {
+            window.removeEventListener('pointerdown', onInteract);
+            window.removeEventListener('keydown', onInteract);
+            window.removeEventListener('wheel', onInteract);
+            window.removeEventListener('touchstart', onInteract);
+        };
+    }, []);
+
+    /* Auto unmute when entering reels, mute when leaving — unless user overrode */
+    useEffect(() => {
+        if (inReels) {
+            if (userInteracted.current && !userOverrode.current) {
+                setAudioOn(true);
+            }
+        } else {
+            setAudioOn(false);
+            userOverrode.current = false; // reset on exit so re-entry auto-unmutes
+        }
+    }, [inReels]);
+
+    const toggleAudio = () => {
+        userOverrode.current = true;
+        setAudioOn((a) => !a);
+    };
 
     useEffect(() => {
         const el = scrollRef.current;
@@ -516,15 +558,16 @@ export default function VoicePage() {
         return () => document.body.classList.remove('voice-page');
     }, []);
 
-    /* Hide navbar when reels section is in view */
+    /* Hide navbar + drive audio when reels section is in view */
     useEffect(() => {
         const reels = document.getElementById('reels');
         if (!reels) return;
         const obs = new IntersectionObserver(
             ([entry]) => {
-                document.body.classList.toggle('ig-reels-active', entry.isIntersecting);
+                document.body.classList.toggle('ig-reels-active', entry.intersectionRatio > 0.2);
+                setInReels(entry.intersectionRatio > 0.6);
             },
-            { threshold: 0.2 }
+            { threshold: [0, 0.2, 0.4, 0.6, 0.8, 1] }
         );
         obs.observe(reels);
         return () => {
@@ -616,6 +659,8 @@ export default function VoicePage() {
                                 isActive={active === i}
                                 fullscreen={fullscreen}
                                 onToggleFullscreen={() => setFullscreen((f) => !f)}
+                                audioOn={audioOn}
+                                onToggleAudio={toggleAudio}
                             />
                         ))}
                     </div>
