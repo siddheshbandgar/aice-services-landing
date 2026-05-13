@@ -881,7 +881,7 @@ export default function VoicePage() {
                     inset: 0;
                     width: 100%;
                     height: 100%;
-                    object-fit: contain;
+                    object-fit: cover;
                     background: #000;
                     pointer-events: none;
                     opacity: 0;
