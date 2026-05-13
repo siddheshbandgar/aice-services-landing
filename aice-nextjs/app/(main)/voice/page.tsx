@@ -122,13 +122,12 @@ function ReelCard({
 
     useEffect(() => {
         if (isActive) {
-            const t = setTimeout(() => {
-                sendYT('playVideo');
-                sendYT(audioOn ? 'unMute' : 'mute');
-                setPlaying(true);
-                scheduleHide();
-            }, 400);
-            return () => clearTimeout(t);
+            /* Send play immediately — no setTimeout. If iframe isn't ready
+               yet, the onReady-effect below retries. */
+            sendYT('playVideo');
+            sendYT(audioOn ? 'unMute' : 'mute');
+            setPlaying(true);
+            scheduleHide();
         } else {
             sendYT('pauseVideo');
             sendYT('mute'); // inactive reels never play audio
@@ -152,7 +151,12 @@ function ReelCard({
         clearTimeout(flashTimer.current);
     }, []);
 
-    /* Listen for YouTube infoDelivery messages to drive the progress bar */
+    /* Listen for YouTube events — drives progress bar AND retries play on ready */
+    const isActiveRef = useRef(isActive);
+    const audioOnRef = useRef(audioOn);
+    useEffect(() => { isActiveRef.current = isActive; }, [isActive]);
+    useEffect(() => { audioOnRef.current = audioOn; }, [audioOn]);
+
     useEffect(() => {
         const durationRef = { current: 0 };
         const onMessage = (e: MessageEvent) => {
@@ -164,17 +168,32 @@ function ReelCard({
             } catch {
                 return;
             }
-            if (!data || data.event !== 'infoDelivery' || !data.info) return;
-            const info = data.info as Record<string, unknown>;
-            if (typeof info.duration === 'number' && info.duration > 0) {
-                durationRef.current = info.duration;
+            if (!data) return;
+
+            /* Player ready / initialDelivery — issue our intended play state now */
+            if (data.event === 'onReady' || data.event === 'initialDelivery') {
+                if (isActiveRef.current) {
+                    sendYT('playVideo');
+                    sendYT(audioOnRef.current ? 'unMute' : 'mute');
+                } else {
+                    sendYT('pauseVideo');
+                    sendYT('mute');
+                }
             }
-            if (typeof info.currentTime === 'number' && durationRef.current > 0) {
-                setProgress(Math.min(1, info.currentTime / durationRef.current));
+
+            if (data.event === 'infoDelivery' && data.info) {
+                const info = data.info as Record<string, unknown>;
+                if (typeof info.duration === 'number' && info.duration > 0) {
+                    durationRef.current = info.duration;
+                }
+                if (typeof info.currentTime === 'number' && durationRef.current > 0) {
+                    setProgress(Math.min(1, info.currentTime / durationRef.current));
+                }
             }
         };
         window.addEventListener('message', onMessage);
         return () => window.removeEventListener('message', onMessage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     /* Poll YouTube for currentTime + duration while this reel is active */
