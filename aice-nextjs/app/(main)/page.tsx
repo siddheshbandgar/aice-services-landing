@@ -28,25 +28,23 @@ export default function Home() {
           </div>
           <div className="products-grid">
 
-            {/* Healthcare */}
-            <Link href="/healthcare" className="product-card">
-              <div className="product-card-preview product-preview-healthcare">
-                <Image
-                  src="/healthcare/01-dashboard.png"
-                  alt="Healthcare AI Dashboard"
-                  fill
-                  style={{ objectFit: 'cover', objectPosition: 'top left' }}
-                  sizes="(max-width: 640px) 100vw, 50vw"
-                />
-                <div className="product-preview-overlay" />
+            {/* MagicalCX */}
+            <a href="https://www.magicalcx.com/" target="_blank" rel="noreferrer" className="product-card product-card-external">
+              <div className="product-card-preview product-preview-magicalcx">
+                <div className="ppm-chat">
+                  <div className="ppm-msg ppm-bot">Hi! How can I help you today? 👋</div>
+                  <div className="ppm-msg ppm-user">I need help with my order</div>
+                  <div className="ppm-msg ppm-bot">Sure! Let me pull that up for you right away.</div>
+                  <div className="ppm-typing"><span /><span /><span /></div>
+                </div>
               </div>
               <div className="product-card-content">
-                <span className="product-card-tag">Healthcare</span>
-                <div className="product-card-name">AI for Healthcare</div>
-                <div className="product-card-desc">Medical tourism, patient engagement &amp; multilingual AI agents.</div>
-                <span className="product-card-cta">Explore →</span>
+                <span className="product-card-tag">Customer Support</span>
+                <div className="product-card-name">MagicalCX <span className="product-card-ext-badge">↗</span></div>
+                <div className="product-card-desc">Intelligent customer support platform for modern businesses.</div>
+                <span className="product-card-cta">Visit magicalcx.com →</span>
               </div>
-            </Link>
+            </a>
 
             {/* Voice */}
             <Link href="/voice" className="product-card">
@@ -65,6 +63,26 @@ export default function Home() {
                 <span className="product-card-tag">Voice</span>
                 <div className="product-card-name">AI Voice Agents</div>
                 <div className="product-card-desc">Inbound &amp; outbound voice agents for bookings, lead qualification, and support.</div>
+                <span className="product-card-cta">Explore →</span>
+              </div>
+            </Link>
+
+            {/* Healthcare */}
+            <Link href="/healthcare" className="product-card">
+              <div className="product-card-preview product-preview-healthcare">
+                <Image
+                  src="/healthcare/01-dashboard.png"
+                  alt="Healthcare AI Dashboard"
+                  fill
+                  style={{ objectFit: 'cover', objectPosition: 'top left' }}
+                  sizes="(max-width: 640px) 100vw, 50vw"
+                />
+                <div className="product-preview-overlay" />
+              </div>
+              <div className="product-card-content">
+                <span className="product-card-tag">Healthcare</span>
+                <div className="product-card-name">AI for Healthcare</div>
+                <div className="product-card-desc">Medical tourism, patient engagement &amp; multilingual AI agents.</div>
                 <span className="product-card-cta">Explore →</span>
               </div>
             </Link>
@@ -109,24 +127,6 @@ export default function Home() {
                 <span className="product-card-cta">Explore →</span>
               </div>
             </Link>
-
-            {/* MagicalCX */}
-            <a href="https://www.magicalcx.com/" target="_blank" rel="noreferrer" className="product-card product-card-external">
-              <div className="product-card-preview product-preview-magicalcx">
-                <div className="ppm-chat">
-                  <div className="ppm-msg ppm-bot">Hi! How can I help you today? 👋</div>
-                  <div className="ppm-msg ppm-user">I need help with my order</div>
-                  <div className="ppm-msg ppm-bot">Sure! Let me pull that up for you right away.</div>
-                  <div className="ppm-typing"><span /><span /><span /></div>
-                </div>
-              </div>
-              <div className="product-card-content">
-                <span className="product-card-tag">Customer Support</span>
-                <div className="product-card-name">MagicalCX <span className="product-card-ext-badge">↗</span></div>
-                <div className="product-card-desc">Intelligent customer support platform for modern businesses.</div>
-                <span className="product-card-cta">Visit magicalcx.com →</span>
-              </div>
-            </a>
 
           </div>
         </div>
