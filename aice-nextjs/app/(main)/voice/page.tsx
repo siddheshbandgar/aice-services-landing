@@ -208,7 +208,38 @@ function ReelCard({
         return () => clearInterval(poll);
     }, [isActive]);
 
-    /* Subscribe to YouTube events once the iframe loads */
+    /* Retry subscription + play until the YT player inside the iframe is alive.
+       postMessage commands sent before the player initializes are silently dropped,
+       which is what causes the YouTube play-button overlay to stay visible. */
+    useEffect(() => {
+        const win = iframeRef.current?.contentWindow;
+        if (!win) return;
+        let alive = false;
+        let attempts = 0;
+        const onMsg = (e: MessageEvent) => {
+            if (e.source === win) alive = true;
+        };
+        window.addEventListener('message', onMsg);
+        const interval = setInterval(() => {
+            if (alive || attempts >= 20) {
+                clearInterval(interval);
+                return;
+            }
+            win.postMessage(JSON.stringify({ event: 'listening', id: demo.slug, channel: 'widget' }), '*');
+            if (isActiveRef.current) {
+                win.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: '' }), '*');
+                win.postMessage(JSON.stringify({ event: 'command', func: audioOnRef.current ? 'unMute' : 'mute', args: '' }), '*');
+            }
+            attempts++;
+        }, 200);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('message', onMsg);
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    /* Subscribe to YouTube events once the iframe loads (first chance) */
     const handleIframeLoad = () => {
         iframeRef.current?.contentWindow?.postMessage(
             JSON.stringify({ event: 'listening', id: demo.slug, channel: 'widget' }), '*'
