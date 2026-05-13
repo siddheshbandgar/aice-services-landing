@@ -3,6 +3,46 @@
 import { useEffect, useRef, useState } from 'react';
 import { useModal } from '@/components/ModalContext';
 
+/* Load the YouTube IFrame API exactly once. Returns a promise that resolves
+   when window.YT.Player is available. Using the real API (not raw postMessage)
+   is what makes autoplay reliable on production — the player is JS-controlled,
+   so playVideo() overrides YouTube's "click-to-play" thumbnail overlay that
+   gets shown on low-engagement domains. */
+declare global {
+    interface Window {
+        YT?: { Player: new (el: HTMLElement | string, opts: Record<string, unknown>) => YTPlayer };
+        onYouTubeIframeAPIReady?: () => void;
+    }
+}
+type YTPlayer = {
+    playVideo: () => void;
+    pauseVideo: () => void;
+    mute: () => void;
+    unMute: () => void;
+    getCurrentTime: () => number;
+    getDuration: () => number;
+    destroy: () => void;
+};
+
+let ytApiPromise: Promise<void> | null = null;
+function loadYouTubeIframeAPI(): Promise<void> {
+    if (typeof window === 'undefined') return Promise.resolve();
+    if (window.YT && window.YT.Player) return Promise.resolve();
+    if (ytApiPromise) return ytApiPromise;
+    ytApiPromise = new Promise<void>((resolve) => {
+        const prev = window.onYouTubeIframeAPIReady;
+        window.onYouTubeIframeAPIReady = () => {
+            prev?.();
+            resolve();
+        };
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        tag.async = true;
+        document.head.appendChild(tag);
+    });
+    return ytApiPromise;
+}
+
 type Demo = {
     slug: string;
     title: string;
@@ -97,7 +137,9 @@ function ReelCard({
     onToggleAudio: () => void;
 }) {
     const { openModal } = useModal();
-    const iframeRef = useRef<HTMLIFrameElement>(null);
+    const mountRef = useRef<HTMLDivElement>(null);
+    const playerRef = useRef<YTPlayer | null>(null);
+    const [ready, setReady] = useState(false);
     const [playing, setPlaying] = useState(false);
     const [controlsVisible, setControlsVisible] = useState(true);
     const [liked, setLiked] = useState(false);
@@ -109,41 +151,91 @@ function ReelCard({
     const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const flashTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-    const sendYT = (func: string) => {
-        iframeRef.current?.contentWindow?.postMessage(
-            JSON.stringify({ event: 'command', func, args: '' }), '*'
-        );
-    };
+    const isActiveRef = useRef(isActive);
+    const audioOnRef = useRef(audioOn);
+    useEffect(() => { isActiveRef.current = isActive; }, [isActive]);
+    useEffect(() => { audioOnRef.current = audioOn; }, [audioOn]);
 
     const scheduleHide = () => {
         clearTimeout(hideTimer.current);
         hideTimer.current = setTimeout(() => setControlsVisible(false), 3000);
     };
 
+    /* Build the YT.Player once on mount. The API replaces our mount div with
+       an iframe it controls — that's how YouTube ensures playVideo() from
+       onReady actually starts playback (the raw postMessage approach silently
+       drops commands sent before the inner player initializes). */
     useEffect(() => {
+        let cancelled = false;
+        loadYouTubeIframeAPI().then(() => {
+            if (cancelled || !mountRef.current || !window.YT) return;
+            playerRef.current = new window.YT.Player(mountRef.current, {
+                videoId: demo.youtubeId,
+                playerVars: {
+                    autoplay: 1,
+                    mute: 1,
+                    loop: 1,
+                    playlist: demo.youtubeId,
+                    controls: 0,
+                    playsinline: 1,
+                    rel: 0,
+                    modestbranding: 1,
+                    iv_load_policy: 3,
+                    disablekb: 1,
+                    fs: 0,
+                },
+                events: {
+                    onReady: () => {
+                        if (cancelled) return;
+                        setReady(true);
+                        const p = playerRef.current;
+                        if (!p) return;
+                        if (isActiveRef.current) {
+                            p.playVideo();
+                            if (audioOnRef.current) p.unMute(); else p.mute();
+                        } else {
+                            p.pauseVideo();
+                            p.mute();
+                        }
+                    },
+                },
+            });
+        });
+        return () => {
+            cancelled = true;
+            try { playerRef.current?.destroy(); } catch { /* noop */ }
+            playerRef.current = null;
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    /* Drive play/pause + mute state when this reel becomes active/inactive */
+    useEffect(() => {
+        if (!ready) return;
+        const p = playerRef.current;
+        if (!p) return;
         if (isActive) {
-            /* Send play immediately — no setTimeout. If iframe isn't ready
-               yet, the onReady-effect below retries. */
-            sendYT('playVideo');
-            sendYT(audioOn ? 'unMute' : 'mute');
+            p.playVideo();
+            if (audioOn) p.unMute(); else p.mute();
             setPlaying(true);
             scheduleHide();
         } else {
-            sendYT('pauseVideo');
-            sendYT('mute'); // inactive reels never play audio
+            p.pauseVideo();
+            p.mute();
             setPlaying(false);
             setControlsVisible(true);
             clearTimeout(hideTimer.current);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isActive]);
+    }, [isActive, ready]);
 
     /* React to global audio toggle for the active reel */
     useEffect(() => {
-        if (!isActive) return;
-        sendYT(audioOn ? 'unMute' : 'mute');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [audioOn, isActive]);
+        if (!ready || !isActive) return;
+        const p = playerRef.current;
+        if (!p) return;
+        if (audioOn) p.unMute(); else p.mute();
+    }, [audioOn, isActive, ready]);
 
     /* Cleanup timers on unmount */
     useEffect(() => () => {
@@ -151,100 +243,20 @@ function ReelCard({
         clearTimeout(flashTimer.current);
     }, []);
 
-    /* Listen for YouTube events — drives progress bar AND retries play on ready */
-    const isActiveRef = useRef(isActive);
-    const audioOnRef = useRef(audioOn);
-    useEffect(() => { isActiveRef.current = isActive; }, [isActive]);
-    useEffect(() => { audioOnRef.current = audioOn; }, [audioOn]);
-
+    /* Poll the player for progress while this reel is active */
     useEffect(() => {
-        const durationRef = { current: 0 };
-        const onMessage = (e: MessageEvent) => {
-            if (!iframeRef.current) return;
-            if (e.source !== iframeRef.current.contentWindow) return;
-            let data: { event?: string; info?: unknown } | null = null;
-            try {
-                data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-            } catch {
-                return;
-            }
-            if (!data) return;
-
-            /* Player ready / initialDelivery — issue our intended play state now */
-            if (data.event === 'onReady' || data.event === 'initialDelivery') {
-                if (isActiveRef.current) {
-                    sendYT('playVideo');
-                    sendYT(audioOnRef.current ? 'unMute' : 'mute');
-                } else {
-                    sendYT('pauseVideo');
-                    sendYT('mute');
-                }
-            }
-
-            if (data.event === 'infoDelivery' && data.info) {
-                const info = data.info as Record<string, unknown>;
-                if (typeof info.duration === 'number' && info.duration > 0) {
-                    durationRef.current = info.duration;
-                }
-                if (typeof info.currentTime === 'number' && durationRef.current > 0) {
-                    setProgress(Math.min(1, info.currentTime / durationRef.current));
-                }
-            }
-        };
-        window.addEventListener('message', onMessage);
-        return () => window.removeEventListener('message', onMessage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    /* Poll YouTube for currentTime + duration while this reel is active */
-    useEffect(() => {
-        if (!isActive) return;
+        if (!ready || !isActive) return;
         const poll = setInterval(() => {
-            const win = iframeRef.current?.contentWindow;
-            if (!win) return;
-            win.postMessage(JSON.stringify({ event: 'command', func: 'getCurrentTime', args: '' }), '*');
-            win.postMessage(JSON.stringify({ event: 'command', func: 'getDuration', args: '' }), '*');
+            const p = playerRef.current;
+            if (!p) return;
+            try {
+                const dur = p.getDuration();
+                const cur = p.getCurrentTime();
+                if (dur > 0) setProgress(Math.min(1, cur / dur));
+            } catch { /* player not ready yet */ }
         }, 350);
         return () => clearInterval(poll);
-    }, [isActive]);
-
-    /* Retry subscription + play until the YT player inside the iframe is alive.
-       postMessage commands sent before the player initializes are silently dropped,
-       which is what causes the YouTube play-button overlay to stay visible. */
-    useEffect(() => {
-        const win = iframeRef.current?.contentWindow;
-        if (!win) return;
-        let alive = false;
-        let attempts = 0;
-        const onMsg = (e: MessageEvent) => {
-            if (e.source === win) alive = true;
-        };
-        window.addEventListener('message', onMsg);
-        const interval = setInterval(() => {
-            if (alive || attempts >= 20) {
-                clearInterval(interval);
-                return;
-            }
-            win.postMessage(JSON.stringify({ event: 'listening', id: demo.slug, channel: 'widget' }), '*');
-            if (isActiveRef.current) {
-                win.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: '' }), '*');
-                win.postMessage(JSON.stringify({ event: 'command', func: audioOnRef.current ? 'unMute' : 'mute', args: '' }), '*');
-            }
-            attempts++;
-        }, 200);
-        return () => {
-            clearInterval(interval);
-            window.removeEventListener('message', onMsg);
-        };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    /* Subscribe to YouTube events once the iframe loads (first chance) */
-    const handleIframeLoad = () => {
-        iframeRef.current?.contentWindow?.postMessage(
-            JSON.stringify({ event: 'listening', id: demo.slug, channel: 'widget' }), '*'
-        );
-    };
+    }, [isActive, ready]);
 
     const flashIcon = (kind: 'pause' | 'play') => {
         clearTimeout(flashTimer.current);
@@ -273,17 +285,17 @@ function ReelCard({
             scheduleHide();
             return;
         }
+        const p = playerRef.current;
         if (playing) {
-            /* Optimistic flash + state change BEFORE postMessage roundtrip */
             flashIcon('pause');
             setPlaying(false);
             clearTimeout(hideTimer.current);
-            sendYT('pauseVideo');
+            p?.pauseVideo();
         } else {
             flashIcon('play');
             setPlaying(true);
             scheduleHide();
-            sendYT('playVideo');
+            p?.playVideo();
         }
     };
 
@@ -300,15 +312,11 @@ function ReelCard({
 
     return (
         <div className={`ig-reel ${controlsVisible ? '' : 'ig-controls-hidden'}`} onClick={handleTap}>
-            {/* YouTube iframe — covers the portrait frame like object-fit:cover */}
-            <iframe
-                ref={iframeRef}
-                className="ig-yt-frame"
-                src={`https://www.youtube.com/embed/${demo.youtubeId}?enablejsapi=1&autoplay=1&mute=1&loop=1&playlist=${demo.youtubeId}&controls=0&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3`}
-                allow="autoplay; encrypted-media"
-                allowFullScreen
-                onLoad={handleIframeLoad}
-            />
+            {/* YT IFrame API mounts here. The wrapper sizes the iframe to cover
+                the portrait frame (16:9 video centered in 9:16 frame). */}
+            <div className="ig-yt-wrap" aria-hidden>
+                <div ref={mountRef} />
+            </div>
 
             {/* Double-tap heart burst */}
             {showHeart && (
@@ -896,11 +904,15 @@ export default function VoicePage() {
                     box-shadow: none !important;
                 }
                 .ig-fullscreen .ig-reel { height: 100vh !important; }
-                .ig-fullscreen .ig-yt-frame {
+                .ig-fullscreen .ig-yt-wrap {
                     height: 100%;
                     width: 100%;
                     min-width: 100%;
                     aspect-ratio: auto;
+                }
+                .ig-fullscreen .ig-yt-wrap iframe {
+                    width: 100%;
+                    height: 100%;
                 }
 
                 /* Each reel */
@@ -915,17 +927,26 @@ export default function VoicePage() {
                     cursor: pointer;
                 }
 
-                /* YouTube iframe — covers the portrait frame (16:9 video in 9:16 frame) */
-                .ig-yt-frame {
+                /* YT IFrame API mount — wrapper covers the portrait frame
+                   (16:9 video centered in 9:16 frame). The API replaces the
+                   inner div with its own iframe; we size that iframe to fill
+                   the wrapper. */
+                .ig-yt-wrap {
                     position: absolute;
                     top: 50%; left: 50%;
                     transform: translate(-50%, -50%);
                     height: 100%;
                     aspect-ratio: 16 / 9;
                     min-width: 100%;
-                    border: none;
                     pointer-events: none;
                     background: #000;
+                    overflow: hidden;
+                }
+                .ig-yt-wrap iframe {
+                    width: 100%;
+                    height: 100%;
+                    border: 0;
+                    display: block;
                 }
 
                 /* Bottom scrim — fades when controls hidden */
