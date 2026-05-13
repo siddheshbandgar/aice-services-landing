@@ -79,7 +79,19 @@ const MARQUEE_ITEMS = [
 
 const NAVBAR_H = 72;
 
-function ReelCard({ demo, index, isActive }: { demo: Demo; index: number; isActive: boolean }) {
+function ReelCard({
+    demo,
+    index,
+    isActive,
+    fullscreen,
+    onToggleFullscreen,
+}: {
+    demo: Demo;
+    index: number;
+    isActive: boolean;
+    fullscreen: boolean;
+    onToggleFullscreen: () => void;
+}) {
     const { openModal } = useModal();
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const [muted, setMuted] = useState(true);
@@ -88,9 +100,11 @@ function ReelCard({ demo, index, isActive }: { demo: Demo; index: number; isActi
     const [liked, setLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(demo.likes);
     const [showHeart, setShowHeart] = useState(false);
-    const [showPauseIcon, setShowPauseIcon] = useState(false);
+    const [showPauseIcon, setShowPauseIcon] = useState<null | 'pause' | 'play'>(null);
+    const [progress, setProgress] = useState(0);
     const lastTap = useRef(0);
     const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    const flashTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
     const sendYT = (func: string) => {
         iframeRef.current?.contentWindow?.postMessage(
@@ -126,12 +140,65 @@ function ReelCard({ demo, index, isActive }: { demo: Demo; index: number; isActi
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [muted]);
 
-    /* Cleanup timer on unmount */
-    useEffect(() => () => clearTimeout(hideTimer.current), []);
+    /* Cleanup timers on unmount */
+    useEffect(() => () => {
+        clearTimeout(hideTimer.current);
+        clearTimeout(flashTimer.current);
+    }, []);
+
+    /* Listen for YouTube infoDelivery messages to drive the progress bar */
+    useEffect(() => {
+        const durationRef = { current: 0 };
+        const onMessage = (e: MessageEvent) => {
+            if (!iframeRef.current) return;
+            if (e.source !== iframeRef.current.contentWindow) return;
+            let data: { event?: string; info?: unknown } | null = null;
+            try {
+                data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+            } catch {
+                return;
+            }
+            if (!data || data.event !== 'infoDelivery' || !data.info) return;
+            const info = data.info as Record<string, unknown>;
+            if (typeof info.duration === 'number' && info.duration > 0) {
+                durationRef.current = info.duration;
+            }
+            if (typeof info.currentTime === 'number' && durationRef.current > 0) {
+                setProgress(Math.min(1, info.currentTime / durationRef.current));
+            }
+        };
+        window.addEventListener('message', onMessage);
+        return () => window.removeEventListener('message', onMessage);
+    }, []);
+
+    /* Poll YouTube for currentTime + duration while this reel is active */
+    useEffect(() => {
+        if (!isActive) return;
+        const poll = setInterval(() => {
+            const win = iframeRef.current?.contentWindow;
+            if (!win) return;
+            win.postMessage(JSON.stringify({ event: 'command', func: 'getCurrentTime', args: '' }), '*');
+            win.postMessage(JSON.stringify({ event: 'command', func: 'getDuration', args: '' }), '*');
+        }, 350);
+        return () => clearInterval(poll);
+    }, [isActive]);
+
+    /* Subscribe to YouTube events once the iframe loads */
+    const handleIframeLoad = () => {
+        iframeRef.current?.contentWindow?.postMessage(
+            JSON.stringify({ event: 'listening', id: demo.slug, channel: 'widget' }), '*'
+        );
+    };
+
+    const flashIcon = (kind: 'pause' | 'play') => {
+        clearTimeout(flashTimer.current);
+        setShowPauseIcon(kind);
+        flashTimer.current = setTimeout(() => setShowPauseIcon(null), 650);
+    };
 
     const handleTap = () => {
         const now = Date.now();
-        if (now - lastTap.current < 300) {
+        if (now - lastTap.current < 280) {
             /* Double tap — like */
             if (!liked) {
                 setLiked(true);
@@ -144,22 +211,23 @@ function ReelCard({ demo, index, isActive }: { demo: Demo; index: number; isActi
         }
         lastTap.current = now;
 
-        /* Single tap — toggle play/pause or reveal controls */
+        /* Single tap — if controls hidden, reveal first; else toggle play/pause */
         if (!controlsVisible) {
             setControlsVisible(true);
             scheduleHide();
             return;
         }
         if (playing) {
-            sendYT('pauseVideo');
+            /* Optimistic flash + state change BEFORE postMessage roundtrip */
+            flashIcon('pause');
             setPlaying(false);
             clearTimeout(hideTimer.current);
-            setShowPauseIcon(true);
-            setTimeout(() => setShowPauseIcon(false), 700);
+            sendYT('pauseVideo');
         } else {
-            sendYT('playVideo');
+            flashIcon('play');
             setPlaying(true);
             scheduleHide();
+            sendYT('playVideo');
         }
     };
 
@@ -183,6 +251,7 @@ function ReelCard({ demo, index, isActive }: { demo: Demo; index: number; isActi
                 src={`https://www.youtube.com/embed/${demo.youtubeId}?enablejsapi=1&autoplay=1&mute=1&loop=1&playlist=${demo.youtubeId}&controls=0&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3`}
                 allow="autoplay; encrypted-media"
                 allowFullScreen
+                onLoad={handleIframeLoad}
             />
 
             {/* Double-tap heart burst */}
@@ -192,12 +261,27 @@ function ReelCard({ demo, index, isActive }: { demo: Demo; index: number; isActi
                 </div>
             )}
 
-            {/* Pause icon flash */}
+            {/* Play/Pause icon flash */}
             {showPauseIcon && (
                 <div className="ig-playpause-flash" aria-hidden>
-                    <svg width="56" height="56" viewBox="0 0 24 24" fill="white">
-                        <rect x="6" y="4" width="4" height="16" rx="1" />
-                        <rect x="14" y="4" width="4" height="16" rx="1" />
+                    {showPauseIcon === 'pause' ? (
+                        <svg viewBox="0 0 24 24" fill="white">
+                            <rect x="6" y="4" width="4" height="16" rx="1" />
+                            <rect x="14" y="4" width="4" height="16" rx="1" />
+                        </svg>
+                    ) : (
+                        <svg viewBox="0 0 24 24" fill="white">
+                            <path d="M8 5v14l11-7z" />
+                        </svg>
+                    )}
+                </div>
+            )}
+
+            {/* Persistent center play button when paused */}
+            {!playing && isActive && !showPauseIcon && (
+                <div className="ig-paused-overlay" aria-hidden>
+                    <svg viewBox="0 0 24 24" fill="white">
+                        <path d="M8 5v14l11-7z" />
                     </svg>
                 </div>
             )}
@@ -221,23 +305,40 @@ function ReelCard({ demo, index, isActive }: { demo: Demo; index: number; isActi
                         {demo.industry}
                     </span>
                 </div>
-                <button
-                    className="ig-mute-toggle"
-                    onClick={(e) => { e.stopPropagation(); setMuted((m) => !m); }}
-                    aria-label={muted ? 'Unmute' : 'Mute'}
-                >
-                    {muted ? (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                            <line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" />
-                        </svg>
-                    ) : (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                            <path d="M15.54 8.46a5 5 0 0 1 0 7.07" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-                        </svg>
-                    )}
-                </button>
+                <div className="ig-top-actions">
+                    <button
+                        className="ig-icon-btn"
+                        onClick={(e) => { e.stopPropagation(); setMuted((m) => !m); }}
+                        aria-label={muted ? 'Unmute' : 'Mute'}
+                    >
+                        {muted ? (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                                <line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" />
+                            </svg>
+                        ) : (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                            </svg>
+                        )}
+                    </button>
+                    <button
+                        className="ig-icon-btn"
+                        onClick={(e) => { e.stopPropagation(); onToggleFullscreen(); }}
+                        aria-label={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+                    >
+                        {fullscreen ? (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M8 3v5H3M16 3v5h5M8 21v-5H3M16 21v-5h5" />
+                            </svg>
+                        ) : (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 8V3h5M21 8V3h-5M3 16v5h5M21 16v5h-5" />
+                            </svg>
+                        )}
+                    </button>
+                </div>
             </div>
 
             {/* Right sidebar */}
@@ -300,6 +401,14 @@ function ReelCard({ demo, index, isActive }: { demo: Demo; index: number; isActi
 
             {/* Reel counter */}
             <div className="ig-counter">{index + 1} / {DEMOS.length}</div>
+
+            {/* Progress bar — always visible, pinned to bottom edge */}
+            <div className="ig-progress">
+                <div
+                    className="ig-progress-fill"
+                    style={{ width: `${progress * 100}%`, background: demo.accent }}
+                />
+            </div>
         </div>
     );
 }
@@ -307,7 +416,9 @@ function ReelCard({ demo, index, isActive }: { demo: Demo; index: number; isActi
 export default function VoicePage() {
     const { openModal } = useModal();
     const scrollRef = useRef<HTMLDivElement>(null);
+    const sceneRef = useRef<HTMLDivElement>(null);
     const [active, setActive] = useState(0);
+    const [fullscreen, setFullscreen] = useState(false);
 
     useEffect(() => {
         const el = scrollRef.current;
@@ -321,6 +432,64 @@ export default function VoicePage() {
         el.addEventListener('scroll', onScroll, { passive: true });
         return () => el.removeEventListener('scroll', onScroll);
     }, []);
+
+    /* Bubble wheel scroll out of the reel viewer when we hit the boundaries
+       (top of first reel scrolling up, bottom of last reel scrolling down). */
+    useEffect(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const onWheel = (e: WheelEvent) => {
+            const atTop = el.scrollTop <= 2;
+            const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
+            const goingDown = e.deltaY > 0;
+            const goingUp = e.deltaY < 0;
+            if ((atBottom && goingDown) || (atTop && goingUp)) {
+                if (fullscreen) return; // in fullscreen, no page scroll
+                e.preventDefault();
+                window.scrollBy({ top: e.deltaY * 1.4, behavior: 'auto' });
+            }
+        };
+        el.addEventListener('wheel', onWheel, { passive: false });
+        return () => el.removeEventListener('wheel', onWheel);
+    }, [fullscreen]);
+
+    /* Touch boundary bubble for mobile */
+    useEffect(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        let startY = 0;
+        const onTouchStart = (e: TouchEvent) => { startY = e.touches[0].clientY; };
+        const onTouchMove = (e: TouchEvent) => {
+            const dy = startY - e.touches[0].clientY;
+            const atTop = el.scrollTop <= 2;
+            const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
+            if (fullscreen) return;
+            if ((atBottom && dy > 0) || (atTop && dy < 0)) {
+                window.scrollBy({ top: dy, behavior: 'auto' });
+                startY = e.touches[0].clientY;
+            }
+        };
+        el.addEventListener('touchstart', onTouchStart, { passive: true });
+        el.addEventListener('touchmove', onTouchMove, { passive: true });
+        return () => {
+            el.removeEventListener('touchstart', onTouchStart);
+            el.removeEventListener('touchmove', onTouchMove);
+        };
+    }, [fullscreen]);
+
+    /* Esc closes fullscreen */
+    useEffect(() => {
+        if (!fullscreen) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setFullscreen(false);
+        };
+        window.addEventListener('keydown', onKey);
+        document.body.classList.add('ig-fs-active');
+        return () => {
+            window.removeEventListener('keydown', onKey);
+            document.body.classList.remove('ig-fs-active');
+        };
+    }, [fullscreen]);
 
     useEffect(() => {
         const obs = new IntersectionObserver(
@@ -411,7 +580,7 @@ export default function VoicePage() {
             </section>
 
             {/* ── INSTAGRAM REELS ── */}
-            <div className="ig-scene" id="reels">
+            <div className={`ig-scene ${fullscreen ? 'ig-fullscreen' : ''}`} id="reels" ref={sceneRef}>
 
                 {/* Dot navigation */}
                 <div className="ig-dots">
@@ -426,11 +595,28 @@ export default function VoicePage() {
                     ))}
                 </div>
 
+                {/* Scroll hint — only when on first reel */}
+                {active === 0 && (
+                    <div className="ig-scroll-hint" aria-hidden>
+                        <span>Scroll</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 5v14M19 12l-7 7-7-7" />
+                        </svg>
+                    </div>
+                )}
+
                 {/* Portrait frame + scroll */}
                 <div className="ig-portrait-wrap">
                     <div className="ig-scroll" ref={scrollRef}>
                         {DEMOS.map((d, i) => (
-                            <ReelCard key={d.slug} demo={d} index={i} isActive={active === i} />
+                            <ReelCard
+                                key={d.slug}
+                                demo={d}
+                                index={i}
+                                isActive={active === i}
+                                fullscreen={fullscreen}
+                                onToggleFullscreen={() => setFullscreen((f) => !f)}
+                            />
                         ))}
                     </div>
                 </div>
@@ -469,7 +655,8 @@ export default function VoicePage() {
                 /* ── PAGE SCROLL SNAP (voice page only) ── */
                 body.voice-page { scroll-snap-type: y proximity; }
                 body.voice-page .vc-hero { scroll-snap-align: start; scroll-snap-stop: always; }
-                body.voice-page .ig-scene { scroll-snap-align: start; scroll-snap-stop: always; }
+                body.voice-page .ig-scene { scroll-snap-align: start; scroll-snap-stop: normal; }
+                body.ig-fs-active.voice-page { scroll-snap-type: none; }
 
                 /* ── ROOT ── */
                 .vc-root { background: var(--color-bg); color: var(--color-text); overflow-x: hidden; }
@@ -592,9 +779,34 @@ export default function VoicePage() {
                     scroll-snap-type: y mandatory;
                     scrollbar-width: none;
                     -webkit-overflow-scrolling: touch;
-                    overscroll-behavior-y: contain;
+                    overscroll-behavior-y: auto;
                 }
                 .ig-scroll::-webkit-scrollbar { display: none; }
+
+                /* ── FULLSCREEN MODE ── */
+                .ig-scene.ig-fullscreen {
+                    position: fixed;
+                    inset: 0;
+                    height: 100vh;
+                    height: 100svh;
+                    width: 100vw;
+                    z-index: 200;
+                    background: #000;
+                }
+                body.ig-fs-active { overflow: hidden; }
+                .ig-fullscreen .ig-portrait-wrap {
+                    width: 100% !important;
+                    height: 100% !important;
+                    border-radius: 0 !important;
+                    box-shadow: none !important;
+                }
+                .ig-fullscreen .ig-reel { height: 100vh !important; }
+                .ig-fullscreen .ig-yt-frame {
+                    height: 100%;
+                    width: 100%;
+                    min-width: 100%;
+                    aspect-ratio: auto;
+                }
 
                 /* Each reel */
                 .ig-reel {
@@ -647,25 +859,42 @@ export default function VoicePage() {
                 .ig-controls-hidden .ig-bottom,
                 .ig-controls-hidden .ig-counter { opacity: 0; pointer-events: none; }
 
-                /* Pause/play center flash */
+                /* Pause/play center flash — appears instantly */
                 .ig-playpause-flash {
                     position: absolute; inset: 0;
                     display: flex; align-items: center; justify-content: center;
                     pointer-events: none; z-index: 20;
                 }
                 .ig-playpause-flash svg {
-                    background: rgba(0,0,0,0.4);
+                    background: rgba(0,0,0,0.45);
                     border-radius: 50%;
-                    padding: 16px;
-                    width: 80px; height: 80px;
-                    animation: flashpop 0.7s ease forwards;
+                    padding: 18px;
+                    width: 84px; height: 84px;
+                    animation: flashpop 0.65s ease forwards;
                 }
                 @keyframes flashpop {
-                    0% { opacity: 0; transform: scale(0.7); }
-                    25% { opacity: 1; transform: scale(1.05); }
-                    70% { opacity: 1; transform: scale(1); }
-                    100% { opacity: 0; transform: scale(1); }
+                    0% { opacity: 0; transform: scale(0.55); }
+                    18% { opacity: 1; transform: scale(1.08); }
+                    55% { opacity: 1; transform: scale(1); }
+                    100% { opacity: 0; transform: scale(1.1); }
                 }
+
+                /* Persistent paused state — big play button overlay */
+                .ig-paused-overlay {
+                    position: absolute; inset: 0;
+                    display: flex; align-items: center; justify-content: center;
+                    pointer-events: none; z-index: 15;
+                    animation: fadein 0.25s ease forwards;
+                }
+                .ig-paused-overlay svg {
+                    width: 78px; height: 78px;
+                    background: rgba(0,0,0,0.55);
+                    border-radius: 50%;
+                    padding: 18px;
+                    backdrop-filter: blur(4px);
+                    filter: drop-shadow(0 6px 24px rgba(0,0,0,0.6));
+                }
+                @keyframes fadein { from{opacity:0} to{opacity:1} }
 
                 /* Double-tap heart */
                 .ig-heart-pop {
@@ -718,7 +947,8 @@ export default function VoicePage() {
                     white-space: nowrap;
                 }
                 .ig-follow-btn:hover { background: rgba(255,255,255,0.15); }
-                .ig-mute-toggle {
+                .ig-top-actions { display: flex; gap: 8px; align-items: center; }
+                .ig-icon-btn {
                     width: 36px; height: 36px; border-radius: 50%;
                     background: rgba(0,0,0,0.55);
                     backdrop-filter: blur(8px);
@@ -726,10 +956,11 @@ export default function VoicePage() {
                     color: #fff;
                     display: flex; align-items: center; justify-content: center;
                     cursor: pointer;
-                    transition: background 0.2s;
+                    transition: background 0.2s, transform 0.15s ease;
                     flex-shrink: 0;
                 }
-                .ig-mute-toggle:hover { background: rgba(0,0,0,0.75); }
+                .ig-icon-btn:hover { background: rgba(0,0,0,0.78); transform: scale(1.07); }
+                .ig-icon-btn:active { transform: scale(0.94); }
 
                 /* ── RIGHT SIDEBAR ── */
                 .ig-sidebar {
@@ -818,6 +1049,25 @@ export default function VoicePage() {
                 .ig-vinyl.ig-vinyl-paused { animation-play-state: paused; }
                 @keyframes vinylspin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 
+                /* Progress bar — pinned to the bottom edge, always visible */
+                .ig-progress {
+                    position: absolute;
+                    left: 0; right: 0; bottom: 0;
+                    height: 3px;
+                    background: rgba(255,255,255,0.18);
+                    z-index: 25;
+                    pointer-events: none;
+                    overflow: hidden;
+                }
+                .ig-progress-fill {
+                    height: 100%;
+                    width: 0%;
+                    background: #fff;
+                    transition: width 0.35s linear;
+                    box-shadow: 0 0 8px currentColor;
+                }
+                .ig-controls-hidden .ig-progress { background: rgba(255,255,255,0.12); }
+
                 /* Reel counter */
                 .ig-counter {
                     position: absolute; top: 16px; right: 16px;
@@ -825,6 +1075,27 @@ export default function VoicePage() {
                     color: rgba(255,255,255,0.4);
                     letter-spacing: 0.04em;
                     z-index: 5;
+                }
+
+                /* Scroll hint on first reel */
+                .ig-scroll-hint {
+                    position: absolute;
+                    bottom: 18px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    display: flex; flex-direction: column; align-items: center; gap: 3px;
+                    color: rgba(255,255,255,0.55);
+                    font-size: 10px; font-weight: 600;
+                    letter-spacing: 0.18em; text-transform: uppercase;
+                    pointer-events: none;
+                    z-index: 30;
+                    animation: hintBob 1.8s ease-in-out infinite;
+                    text-shadow: 0 1px 6px rgba(0,0,0,0.5);
+                }
+                .ig-fullscreen .ig-scroll-hint { display: none; }
+                @keyframes hintBob {
+                    0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.55; }
+                    50%      { transform: translateX(-50%) translateY(6px); opacity: 0.9; }
                 }
 
                 /* Dot navigation */
@@ -908,16 +1179,50 @@ export default function VoicePage() {
                     .ig-scene { height: calc(100svh - 64px); }
                     .ig-reel { height: calc(100svh - 64px); }
                     .ig-portrait-wrap { height: calc(100svh - 64px); }
+                    .ig-fullscreen .ig-reel { height: 100svh !important; }
 
-                    /* Bottom info */
-                    .ig-bottom { right: 68px; padding: 0 14px 20px; }
-                    .ig-sidebar { right: 10px; bottom: 110px; gap: 16px; }
-                    .ig-metric-display { font-size: clamp(36px, 12vw, 56px); }
+                    /* Bottom info — make room for sidebar + progress bar */
+                    .ig-bottom { right: 64px; padding: 0 14px 22px; }
+                    .ig-sidebar { right: 8px; bottom: 96px; gap: 14px; }
+                    .ig-metric-display { font-size: clamp(36px, 12vw, 56px); margin-bottom: 4px; }
+                    .ig-reel-tagline { font-size: 12px; margin-bottom: 10px; }
                     .ig-action-icon { width: 26px; height: 26px; }
 
-                    /* Top */
+                    /* Top — compact, prevent overflow on narrow phones */
+                    .ig-top { top: 12px; left: 12px; right: 12px; gap: 8px; }
+                    .ig-user-row { gap: 8px; min-width: 0; flex: 1; }
+                    .ig-avatar { width: 32px; height: 32px; }
+                    .ig-handle {
+                        font-size: 13px;
+                        max-width: 110px;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                    }
+                    .ig-industry-tag {
+                        font-size: 10px;
+                        letter-spacing: 0.08em;
+                        white-space: nowrap;
+                    }
+                    .ig-top-actions { gap: 6px; flex-shrink: 0; }
+                    .ig-icon-btn { width: 32px; height: 32px; }
                     .ig-follow-btn { font-size: 12px; padding: 4px 10px; }
-                    .ig-handle { font-size: 13px; }
+
+                    /* Counter */
+                    .ig-counter { top: 58px; right: 14px; font-size: 11px; }
+
+                    /* Progress bar — slightly thicker on mobile for visibility */
+                    .ig-progress { height: 4px; }
+
+                    /* Scroll hint — hide on mobile, users intuit reels */
+                    .ig-scroll-hint { display: none; }
+
+                    /* Paused overlay — slightly smaller on mobile */
+                    .ig-paused-overlay svg { width: 68px; height: 68px; padding: 15px; }
+                    .ig-playpause-flash svg { width: 72px; height: 72px; padding: 15px; }
+
+                    /* Dots — tighter on mobile */
+                    .ig-dots { left: 6px; gap: 6px; }
 
                     /* Stats */
                     .vc-stats .vc-wrap { grid-template-columns: repeat(2,1fr); gap: 32px; }
