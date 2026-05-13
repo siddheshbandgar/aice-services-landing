@@ -423,7 +423,7 @@ export default function VoicePage() {
                         <h2>Your agent. Live in 2 weeks.</h2>
                         <div className="vc-cta-btns">
                             <button className="btn btn-primary btn-lg" style={{ background: '#fff', color: '#0f172a' }} onClick={openModal}>Book a Demo</button>
-                            <a href="mailto:hello@aice.services" className="btn btn-secondary btn-lg" style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.35)' }}>Talk to a Human</a>
+                            <a href="https://wa.me/918956366659?text=Hi%2C%20I%27d%20like%20to%20know%20more%20about%20AICE%20Voice%20Agents" target="_blank" rel="noreferrer" className="btn btn-secondary btn-lg" style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.35)' }}>Talk to a Human</a>
                         </div>
                     </div>
                 </div>
