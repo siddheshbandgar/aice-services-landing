@@ -911,7 +911,7 @@ export default function VoicePage() {
                     100% { transform: translateX(100%); }
                 }
 
-                /* Bottom scrim — fades when controls hidden */
+                /* Permanent scrim for text readability — never fades */
                 .ig-gradient {
                     position: absolute; inset: 0;
                     background: linear-gradient(
@@ -924,16 +924,13 @@ export default function VoicePage() {
                     );
                     pointer-events: none;
                     z-index: 1;
-                    transition: opacity 0.6s ease;
                 }
-                .ig-controls-hidden .ig-gradient { opacity: 0.12; }
 
-                /* Controls auto-hide transitions */
-                .ig-top, .ig-sidebar, .ig-bottom, .ig-counter {
+                /* Only the bottom caption + counter auto-hide.
+                   Top bar and sidebar buttons stay visible always. */
+                .ig-bottom, .ig-counter {
                     transition: opacity 0.5s ease;
                 }
-                .ig-controls-hidden .ig-top,
-                .ig-controls-hidden .ig-sidebar,
                 .ig-controls-hidden .ig-bottom,
                 .ig-controls-hidden .ig-counter { opacity: 0; pointer-events: none; }
 
