@@ -3,46 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useModal } from '@/components/ModalContext';
 
-/* Load the YouTube IFrame API exactly once. Returns a promise that resolves
-   when window.YT.Player is available. Using the real API (not raw postMessage)
-   is what makes autoplay reliable on production — the player is JS-controlled,
-   so playVideo() overrides YouTube's "click-to-play" thumbnail overlay that
-   gets shown on low-engagement domains. */
-declare global {
-    interface Window {
-        YT?: { Player: new (el: HTMLElement | string, opts: Record<string, unknown>) => YTPlayer };
-        onYouTubeIframeAPIReady?: () => void;
-    }
-}
-type YTPlayer = {
-    playVideo: () => void;
-    pauseVideo: () => void;
-    mute: () => void;
-    unMute: () => void;
-    getCurrentTime: () => number;
-    getDuration: () => number;
-    destroy: () => void;
-};
-
-let ytApiPromise: Promise<void> | null = null;
-function loadYouTubeIframeAPI(): Promise<void> {
-    if (typeof window === 'undefined') return Promise.resolve();
-    if (window.YT && window.YT.Player) return Promise.resolve();
-    if (ytApiPromise) return ytApiPromise;
-    ytApiPromise = new Promise<void>((resolve) => {
-        const prev = window.onYouTubeIframeAPIReady;
-        window.onYouTubeIframeAPIReady = () => {
-            prev?.();
-            resolve();
-        };
-        const tag = document.createElement('script');
-        tag.src = 'https://www.youtube.com/iframe_api';
-        tag.async = true;
-        document.head.appendChild(tag);
-    });
-    return ytApiPromise;
-}
-
 type Demo = {
     slug: string;
     title: string;
@@ -50,7 +10,7 @@ type Demo = {
     tagline: string;
     metric: string;
     metricLabel: string;
-    youtubeId: string;
+    src: string;
     accent: string;
     likes: number;
     comments: number;
@@ -64,7 +24,7 @@ const DEMOS: Demo[] = [
         tagline: 'Dials hundreds of leads daily, pitches listings, routes hot buyers straight to your agents.',
         metric: '8×',
         metricLabel: 'more dials / hour',
-        youtubeId: 'TCDNUMABEnI',
+        src: '/voice/real-estate-outbound.mp4',
         accent: '#f59e0b',
         likes: 1923,
         comments: 89,
@@ -76,7 +36,7 @@ const DEMOS: Demo[] = [
         tagline: 'Handles inbound calls, checks availability, and confirms bookings — 24/7 without staff.',
         metric: '3×',
         metricLabel: 'more bookings handled',
-        youtubeId: '4_6y0Tc-RMk',
+        src: '/voice/booking-agent.mp4',
         accent: '#10b981',
         likes: 2847,
         comments: 134,
@@ -88,7 +48,7 @@ const DEMOS: Demo[] = [
         tagline: 'Scores every inbound lead on budget, timeline and intent before your team ever picks up.',
         metric: '92%',
         metricLabel: 'qualification accuracy',
-        youtubeId: 'fEMu-T2_1Zw',
+        src: '/voice/lead-qualification.mp4',
         accent: '#fb923c',
         likes: 3241,
         comments: 201,
@@ -100,7 +60,7 @@ const DEMOS: Demo[] = [
         tagline: 'Post-service outbound call that captures reviews and flags unhappy customers automatically.',
         metric: '4.7★',
         metricLabel: 'avg rating captured',
-        youtubeId: 'DnXb-gJ4WpE',
+        src: '/voice/review-collection.mp4',
         accent: '#60a5fa',
         likes: 2103,
         comments: 112,
@@ -137,9 +97,8 @@ function ReelCard({
     onToggleAudio: () => void;
 }) {
     const { openModal } = useModal();
-    const mountRef = useRef<HTMLDivElement>(null);
-    const playerRef = useRef<YTPlayer | null>(null);
-    const [ready, setReady] = useState(false);
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const [loaded, setLoaded] = useState(false);
     const [playing, setPlaying] = useState(false);
     const [controlsVisible, setControlsVisible] = useState(true);
     const [liked, setLiked] = useState(false);
@@ -151,91 +110,58 @@ function ReelCard({
     const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const flashTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-    const isActiveRef = useRef(isActive);
-    const audioOnRef = useRef(audioOn);
-    useEffect(() => { isActiveRef.current = isActive; }, [isActive]);
-    useEffect(() => { audioOnRef.current = audioOn; }, [audioOn]);
-
     const scheduleHide = () => {
         clearTimeout(hideTimer.current);
         hideTimer.current = setTimeout(() => setControlsVisible(false), 3000);
     };
 
-    /* Build the YT.Player once on mount. The API replaces our mount div with
-       an iframe it controls — that's how YouTube ensures playVideo() from
-       onReady actually starts playback (the raw postMessage approach silently
-       drops commands sent before the inner player initializes). */
+    /* Drive play/pause + mute state when this reel becomes active/inactive.
+       attemptPlay() handles the rare case where autoplay was blocked: when
+       muted, every modern browser allows .play() to succeed without a user
+       gesture, so retrying with muted=true always recovers. */
     useEffect(() => {
-        let cancelled = false;
-        loadYouTubeIframeAPI().then(() => {
-            if (cancelled || !mountRef.current || !window.YT) return;
-            playerRef.current = new window.YT.Player(mountRef.current, {
-                videoId: demo.youtubeId,
-                playerVars: {
-                    autoplay: 1,
-                    mute: 1,
-                    loop: 1,
-                    playlist: demo.youtubeId,
-                    controls: 0,
-                    playsinline: 1,
-                    rel: 0,
-                    modestbranding: 1,
-                    iv_load_policy: 3,
-                    disablekb: 1,
-                    fs: 0,
-                },
-                events: {
-                    onReady: () => {
-                        if (cancelled) return;
-                        setReady(true);
-                        const p = playerRef.current;
-                        if (!p) return;
-                        if (isActiveRef.current) {
-                            p.playVideo();
-                            if (audioOnRef.current) p.unMute(); else p.mute();
-                        } else {
-                            p.pauseVideo();
-                            p.mute();
-                        }
-                    },
-                },
-            });
-        });
-        return () => {
-            cancelled = true;
-            try { playerRef.current?.destroy(); } catch { /* noop */ }
-            playerRef.current = null;
-        };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    /* Drive play/pause + mute state when this reel becomes active/inactive */
-    useEffect(() => {
-        if (!ready) return;
-        const p = playerRef.current;
-        if (!p) return;
+        const v = videoRef.current;
+        if (!v) return;
         if (isActive) {
-            p.playVideo();
-            if (audioOn) p.unMute(); else p.mute();
+            v.muted = !audioOn;
+            v.currentTime = 0;
+            const attemptPlay = () => {
+                const p = v.play();
+                if (p && typeof p.catch === 'function') {
+                    p.catch(() => {
+                        // Autoplay-with-sound got blocked. Force mute and retry —
+                        // muted playback is always allowed.
+                        v.muted = true;
+                        v.play().catch(() => { /* user must tap to start */ });
+                    });
+                }
+            };
+            attemptPlay();
             setPlaying(true);
             scheduleHide();
         } else {
-            p.pauseVideo();
-            p.mute();
+            v.pause();
+            v.muted = true;
             setPlaying(false);
             setControlsVisible(true);
             clearTimeout(hideTimer.current);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isActive, ready]);
+    }, [isActive]);
 
     /* React to global audio toggle for the active reel */
     useEffect(() => {
-        if (!ready || !isActive) return;
-        const p = playerRef.current;
-        if (!p) return;
-        if (audioOn) p.unMute(); else p.mute();
-    }, [audioOn, isActive, ready]);
+        if (!isActive) return;
+        const v = videoRef.current;
+        if (!v) return;
+        v.muted = !audioOn;
+        // If unmuting, the browser may pause if there was no user gesture —
+        // re-issue play.
+        if (audioOn) {
+            const p = v.play();
+            if (p && typeof p.catch === 'function') p.catch(() => { /* noop */ });
+        }
+    }, [audioOn, isActive]);
 
     /* Cleanup timers on unmount */
     useEffect(() => () => {
@@ -243,20 +169,28 @@ function ReelCard({
         clearTimeout(flashTimer.current);
     }, []);
 
-    /* Poll the player for progress while this reel is active */
+    /* Update progress from the video element's timeupdate event */
     useEffect(() => {
-        if (!ready || !isActive) return;
-        const poll = setInterval(() => {
-            const p = playerRef.current;
-            if (!p) return;
-            try {
-                const dur = p.getDuration();
-                const cur = p.getCurrentTime();
-                if (dur > 0) setProgress(Math.min(1, cur / dur));
-            } catch { /* player not ready yet */ }
-        }, 350);
-        return () => clearInterval(poll);
-    }, [isActive, ready]);
+        const v = videoRef.current;
+        if (!v) return;
+        const onTime = () => {
+            if (v.duration > 0) setProgress(Math.min(1, v.currentTime / v.duration));
+        };
+        const onLoaded = () => setLoaded(true);
+        const onPlay = () => setPlaying(true);
+        const onPause = () => { if (isActive) setPlaying(false); };
+        v.addEventListener('timeupdate', onTime);
+        v.addEventListener('loadeddata', onLoaded);
+        v.addEventListener('play', onPlay);
+        v.addEventListener('pause', onPause);
+        return () => {
+            v.removeEventListener('timeupdate', onTime);
+            v.removeEventListener('loadeddata', onLoaded);
+            v.removeEventListener('play', onPlay);
+            v.removeEventListener('pause', onPause);
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const flashIcon = (kind: 'pause' | 'play') => {
         clearTimeout(flashTimer.current);
@@ -285,17 +219,18 @@ function ReelCard({
             scheduleHide();
             return;
         }
-        const p = playerRef.current;
+        const v = videoRef.current;
         if (playing) {
             flashIcon('pause');
             setPlaying(false);
             clearTimeout(hideTimer.current);
-            p?.pauseVideo();
+            v?.pause();
         } else {
             flashIcon('play');
             setPlaying(true);
             scheduleHide();
-            p?.playVideo();
+            const p = v?.play();
+            if (p && typeof p.catch === 'function') p.catch(() => { /* noop */ });
         }
     };
 
@@ -312,11 +247,21 @@ function ReelCard({
 
     return (
         <div className={`ig-reel ${controlsVisible ? '' : 'ig-controls-hidden'}`} onClick={handleTap}>
-            {/* YT IFrame API mounts here. The wrapper sizes the iframe to cover
-                the portrait frame (16:9 video centered in 9:16 frame). */}
-            <div className="ig-yt-wrap" aria-hidden>
-                <div ref={mountRef} />
-            </div>
+            {/* Native <video>. Only the active reel preloads aggressively;
+                others fetch metadata so they can start fast when scrolled to. */}
+            <video
+                ref={videoRef}
+                className={`ig-video ${loaded ? 'ig-video-loaded' : ''}`}
+                src={demo.src}
+                muted
+                playsInline
+                loop
+                preload={isActive ? 'auto' : 'metadata'}
+                disablePictureInPicture
+                disableRemotePlayback
+                aria-hidden
+            />
+            {!loaded && <div className="ig-video-skel" aria-hidden />}
 
             {/* Double-tap heart burst */}
             {showHeart && (
@@ -483,12 +428,14 @@ export default function VoicePage() {
     const sceneRef = useRef<HTMLDivElement>(null);
     const [active, setActive] = useState(0);
     const [fullscreen, setFullscreen] = useState(false);
+    /* Audio is OFF until the user scrolls into the reels section, then ON.
+       Once the user manually mutes, we don't auto-unmute again on this visit. */
     const [audioOn, setAudioOn] = useState(false);
     const [inReels, setInReels] = useState(false);
     const userInteracted = useRef(false);
     const userOverrode = useRef(false);
 
-    /* Track first user gesture — browsers block autoplay-with-sound until then */
+    /* Track first user gesture — browsers block audible playback without one */
     useEffect(() => {
         const onInteract = () => { userInteracted.current = true; };
         window.addEventListener('pointerdown', onInteract, { once: true, passive: true });
@@ -503,7 +450,8 @@ export default function VoicePage() {
         };
     }, []);
 
-    /* Auto unmute when entering reels, mute when leaving — unless user overrode */
+    /* Auto-unmute on entering the reels section, re-mute on exit.
+       If the user manually muted (userOverrode), respect that until they leave. */
     useEffect(() => {
         if (inReels) {
             if (userInteracted.current && !userOverrode.current) {
@@ -511,7 +459,7 @@ export default function VoicePage() {
             }
         } else {
             setAudioOn(false);
-            userOverrode.current = false; // reset on exit so re-entry auto-unmutes
+            userOverrode.current = false;
         }
     }, [inReels]);
 
@@ -616,7 +564,7 @@ export default function VoicePage() {
         return () => document.body.classList.remove('voice-page');
     }, []);
 
-    /* Hide navbar + drive audio when reels section is in view */
+    /* Hide navbar + flip audio when the reels section is in view */
     useEffect(() => {
         const reels = document.getElementById('reels');
         if (!reels) return;
@@ -904,15 +852,8 @@ export default function VoicePage() {
                     box-shadow: none !important;
                 }
                 .ig-fullscreen .ig-reel { height: 100vh !important; }
-                .ig-fullscreen .ig-yt-wrap {
-                    height: 100%;
-                    width: 100%;
-                    min-width: 100%;
-                    aspect-ratio: auto;
-                }
-                .ig-fullscreen .ig-yt-wrap iframe {
-                    width: 100%;
-                    height: 100%;
+                .ig-fullscreen .ig-video {
+                    object-fit: contain;
                 }
 
                 /* Each reel */
@@ -927,26 +868,44 @@ export default function VoicePage() {
                     cursor: pointer;
                 }
 
-                /* YT IFrame API mount — wrapper covers the portrait frame
-                   (16:9 video centered in 9:16 frame). The API replaces the
-                   inner div with its own iframe; we size that iframe to fill
-                   the wrapper. */
-                .ig-yt-wrap {
+                /* Native video element — fills the portrait frame. We use
+                   object-fit: contain so the landscape demo footage shows in
+                   full with dark letterbox bars top/bottom, instead of being
+                   cropped (the demos are screen recordings; cropping loses
+                   essential UI). */
+                .ig-video {
                     position: absolute;
-                    top: 50%; left: 50%;
-                    transform: translate(-50%, -50%);
-                    height: 100%;
-                    aspect-ratio: 16 / 9;
-                    min-width: 100%;
-                    pointer-events: none;
-                    background: #000;
-                    overflow: hidden;
-                }
-                .ig-yt-wrap iframe {
+                    inset: 0;
                     width: 100%;
                     height: 100%;
-                    border: 0;
-                    display: block;
+                    object-fit: contain;
+                    background: #000;
+                    pointer-events: none;
+                    opacity: 0;
+                    transition: opacity 0.25s ease;
+                }
+                .ig-video-loaded { opacity: 1; }
+
+                /* Subtle skeleton shimmer until the first frame is decoded. */
+                .ig-video-skel {
+                    position: absolute;
+                    inset: 0;
+                    background:
+                        radial-gradient(60% 40% at 50% 50%, rgba(255,255,255,0.05) 0%, transparent 70%),
+                        #0a0a0a;
+                    z-index: 1;
+                    pointer-events: none;
+                }
+                .ig-video-skel::after {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.06) 50%, transparent 70%);
+                    animation: ig-shimmer 1.6s linear infinite;
+                }
+                @keyframes ig-shimmer {
+                    0%   { transform: translateX(-100%); }
+                    100% { transform: translateX(100%); }
                 }
 
                 /* Bottom scrim — fades when controls hidden */
