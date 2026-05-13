@@ -169,23 +169,26 @@ function ReelCard({
         clearTimeout(flashTimer.current);
     }, []);
 
-    /* Update progress from the video element's timeupdate event */
+    /* Sync video element events → React state */
     useEffect(() => {
         const v = videoRef.current;
         if (!v) return;
         const onTime = () => {
             if (v.duration > 0) setProgress(Math.min(1, v.currentTime / v.duration));
         };
-        const onLoaded = () => setLoaded(true);
+        const markLoaded = () => setLoaded(true);
         const onPlay = () => setPlaying(true);
         const onPause = () => { if (isActive) setPlaying(false); };
+        // readyState >= 2 means the browser already has the current frame —
+        // loadeddata already fired before our listener attached, so set immediately.
+        if (v.readyState >= 2) setLoaded(true);
+        v.addEventListener('loadeddata', markLoaded);
         v.addEventListener('timeupdate', onTime);
-        v.addEventListener('loadeddata', onLoaded);
         v.addEventListener('play', onPlay);
         v.addEventListener('pause', onPause);
         return () => {
+            v.removeEventListener('loadeddata', markLoaded);
             v.removeEventListener('timeupdate', onTime);
-            v.removeEventListener('loadeddata', onLoaded);
             v.removeEventListener('play', onPlay);
             v.removeEventListener('pause', onPause);
         };
