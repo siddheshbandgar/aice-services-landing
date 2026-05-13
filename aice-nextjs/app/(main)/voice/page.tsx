@@ -30,18 +30,6 @@ const DEMOS: Demo[] = [
         comments: 89,
     },
     {
-        slug: 'urban-klean-booking',
-        title: 'Booking Agent',
-        industry: 'Hospitality',
-        tagline: 'Handles inbound calls, checks availability, and confirms bookings — 24/7 without staff.',
-        metric: '3×',
-        metricLabel: 'more bookings handled',
-        src: '/voice/booking-agent.mp4',
-        accent: '#10b981',
-        likes: 2847,
-        comments: 134,
-    },
-    {
         slug: 'real-estate-lead-qual',
         title: 'Lead Qualification',
         industry: 'Real Estate',
@@ -64,6 +52,18 @@ const DEMOS: Demo[] = [
         accent: '#60a5fa',
         likes: 2103,
         comments: 112,
+    },
+    {
+        slug: 'urban-klean-booking',
+        title: 'Booking Agent',
+        industry: 'Hospitality',
+        tagline: 'Handles inbound calls, checks availability, and confirms bookings — 24/7 without staff.',
+        metric: '3×',
+        metricLabel: 'more bookings handled',
+        src: '/voice/booking-agent.mp4',
+        accent: '#10b981',
+        likes: 2847,
+        comments: 134,
     },
 ];
 
@@ -99,7 +99,8 @@ function ReelCard({
     const { openModal } = useModal();
     const videoRef = useRef<HTMLVideoElement>(null);
     const [loaded, setLoaded] = useState(false);
-    const [playing, setPlaying] = useState(false);
+    // Initialise to isActive so the pause overlay never flashes on the first reel
+    const [playing, setPlaying] = useState(isActive);
     const [controlsVisible, setControlsVisible] = useState(true);
     const [liked, setLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(demo.likes);
@@ -124,19 +125,17 @@ function ReelCard({
         if (!v) return;
         if (isActive) {
             v.muted = !audioOn;
-            v.currentTime = 0;
-            const attemptPlay = () => {
-                const p = v.play();
-                if (p && typeof p.catch === 'function') {
-                    p.catch(() => {
-                        // Autoplay-with-sound got blocked. Force mute and retry —
-                        // muted playback is always allowed.
-                        v.muted = true;
-                        v.play().catch(() => { /* user must tap to start */ });
-                    });
-                }
-            };
-            attemptPlay();
+            // Only seek to start when switching reels, not on initial mount
+            // (setting currentTime on an unloaded video can abort the play call)
+            if (v.readyState >= 1) v.currentTime = 0;
+            const p = v.play();
+            if (p && typeof p.catch === 'function') {
+                p.catch(() => {
+                    // Audible autoplay blocked — fall back to muted and retry
+                    v.muted = true;
+                    v.play().catch(() => { /* requires user tap */ });
+                });
+            }
             setPlaying(true);
             scheduleHide();
         } else {
@@ -257,6 +256,7 @@ function ReelCard({
                 className={`ig-video ${loaded ? 'ig-video-loaded' : ''}`}
                 src={demo.src}
                 muted
+                autoPlay={isActive}
                 playsInline
                 loop
                 preload={isActive ? 'auto' : 'metadata'}
