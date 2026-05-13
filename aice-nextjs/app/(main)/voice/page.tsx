@@ -82,11 +82,15 @@ const NAVBAR_H = 72;
 function ReelCard({ demo, index, isActive }: { demo: Demo; index: number; isActive: boolean }) {
     const { openModal } = useModal();
     const iframeRef = useRef<HTMLIFrameElement>(null);
-    const [muted, setMuted] = useState(true); // YouTube autoplay requires starting muted
+    const [muted, setMuted] = useState(true);
+    const [playing, setPlaying] = useState(false);
+    const [controlsVisible, setControlsVisible] = useState(true);
     const [liked, setLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(demo.likes);
     const [showHeart, setShowHeart] = useState(false);
+    const [showPauseIcon, setShowPauseIcon] = useState(false);
     const lastTap = useRef(0);
+    const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
     const sendYT = (func: string) => {
         iframeRef.current?.contentWindow?.postMessage(
@@ -94,15 +98,25 @@ function ReelCard({ demo, index, isActive }: { demo: Demo; index: number; isActi
         );
     };
 
+    const scheduleHide = () => {
+        clearTimeout(hideTimer.current);
+        hideTimer.current = setTimeout(() => setControlsVisible(false), 3000);
+    };
+
     useEffect(() => {
         if (isActive) {
             const t = setTimeout(() => {
                 sendYT('playVideo');
                 if (!muted) sendYT('unMute');
+                setPlaying(true);
+                scheduleHide();
             }, 400);
             return () => clearTimeout(t);
         } else {
             sendYT('pauseVideo');
+            setPlaying(false);
+            setControlsVisible(true);
+            clearTimeout(hideTimer.current);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isActive]);
@@ -112,17 +126,41 @@ function ReelCard({ demo, index, isActive }: { demo: Demo; index: number; isActi
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [muted]);
 
+    /* Cleanup timer on unmount */
+    useEffect(() => () => clearTimeout(hideTimer.current), []);
+
     const handleTap = () => {
         const now = Date.now();
         if (now - lastTap.current < 300) {
+            /* Double tap — like */
             if (!liked) {
                 setLiked(true);
                 setLikeCount((c) => c + 1);
             }
             setShowHeart(true);
             setTimeout(() => setShowHeart(false), 900);
+            lastTap.current = 0;
+            return;
         }
         lastTap.current = now;
+
+        /* Single tap — toggle play/pause or reveal controls */
+        if (!controlsVisible) {
+            setControlsVisible(true);
+            scheduleHide();
+            return;
+        }
+        if (playing) {
+            sendYT('pauseVideo');
+            setPlaying(false);
+            clearTimeout(hideTimer.current);
+            setShowPauseIcon(true);
+            setTimeout(() => setShowPauseIcon(false), 700);
+        } else {
+            sendYT('playVideo');
+            setPlaying(true);
+            scheduleHide();
+        }
     };
 
     const toggleLike = (e: React.MouseEvent) => {
@@ -137,7 +175,7 @@ function ReelCard({ demo, index, isActive }: { demo: Demo; index: number; isActi
     };
 
     return (
-        <div className="ig-reel" onClick={handleTap}>
+        <div className={`ig-reel ${controlsVisible ? '' : 'ig-controls-hidden'}`} onClick={handleTap}>
             {/* YouTube iframe — covers the portrait frame like object-fit:cover */}
             <iframe
                 ref={iframeRef}
@@ -154,7 +192,17 @@ function ReelCard({ demo, index, isActive }: { demo: Demo; index: number; isActi
                 </div>
             )}
 
-            {/* Bottom gradient */}
+            {/* Pause icon flash */}
+            {showPauseIcon && (
+                <div className="ig-playpause-flash" aria-hidden>
+                    <svg width="56" height="56" viewBox="0 0 24 24" fill="white">
+                        <rect x="6" y="4" width="4" height="16" rx="1" />
+                        <rect x="14" y="4" width="4" height="16" rx="1" />
+                    </svg>
+                </div>
+            )}
+
+            {/* Bottom gradient — fades when controls hidden */}
             <div className="ig-gradient" />
 
             {/* Top bar */}
@@ -343,7 +391,7 @@ export default function VoicePage() {
                     </p>
                     <div className="vc-hero-actions">
                         <button className="btn btn-primary btn-lg" onClick={openModal}>Book a Demo</button>
-                        <a href="#reels" className="btn btn-secondary btn-lg">Watch demos ↓</a>
+                        <button className="btn btn-secondary btn-lg" onClick={() => document.getElementById('reels')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Watch demos ↓</button>
                     </div>
                 </div>
 
@@ -573,19 +621,50 @@ export default function VoicePage() {
                     background: #000;
                 }
 
-                /* Bottom scrim */
+                /* Bottom scrim — fades when controls hidden */
                 .ig-gradient {
                     position: absolute; inset: 0;
                     background: linear-gradient(
                         180deg,
-                        rgba(0,0,0,0.4) 0%,
+                        rgba(0,0,0,0.35) 0%,
                         rgba(0,0,0,0) 20%,
                         rgba(0,0,0,0) 40%,
-                        rgba(0,0,0,0.5) 65%,
-                        rgba(0,0,0,0.88) 100%
+                        rgba(0,0,0,0.45) 65%,
+                        rgba(0,0,0,0.82) 100%
                     );
                     pointer-events: none;
                     z-index: 1;
+                    transition: opacity 0.6s ease;
+                }
+                .ig-controls-hidden .ig-gradient { opacity: 0.12; }
+
+                /* Controls auto-hide transitions */
+                .ig-top, .ig-sidebar, .ig-bottom, .ig-counter {
+                    transition: opacity 0.5s ease;
+                }
+                .ig-controls-hidden .ig-top,
+                .ig-controls-hidden .ig-sidebar,
+                .ig-controls-hidden .ig-bottom,
+                .ig-controls-hidden .ig-counter { opacity: 0; pointer-events: none; }
+
+                /* Pause/play center flash */
+                .ig-playpause-flash {
+                    position: absolute; inset: 0;
+                    display: flex; align-items: center; justify-content: center;
+                    pointer-events: none; z-index: 20;
+                }
+                .ig-playpause-flash svg {
+                    background: rgba(0,0,0,0.4);
+                    border-radius: 50%;
+                    padding: 16px;
+                    width: 80px; height: 80px;
+                    animation: flashpop 0.7s ease forwards;
+                }
+                @keyframes flashpop {
+                    0% { opacity: 0; transform: scale(0.7); }
+                    25% { opacity: 1; transform: scale(1.05); }
+                    70% { opacity: 1; transform: scale(1); }
+                    100% { opacity: 0; transform: scale(1); }
                 }
 
                 /* Double-tap heart */
