@@ -10,7 +10,7 @@ type Demo = {
     tagline: string;
     metric: string;
     metricLabel: string;
-    src: string;
+    youtubeId: string;
     accent: string;
     likes: number;
     comments: number;
@@ -18,13 +18,13 @@ type Demo = {
 
 const DEMOS: Demo[] = [
     {
-        slug: 'doctor-appointment-booking',
-        title: 'Doctor Appointment Booking',
-        industry: 'Healthcare',
-        tagline: 'Answers calls, checks availability, and books appointments — without a receptionist.',
-        metric: '240+',
-        metricLabel: 'appointments / day',
-        src: '/voice/Demo 1 Urban Klean.mp4',
+        slug: 'urban-klean-booking',
+        title: 'Booking Agent',
+        industry: 'Hospitality',
+        tagline: 'Handles inbound calls, checks availability, and confirms bookings — 24/7 without staff.',
+        metric: '3×',
+        metricLabel: 'more bookings handled',
+        youtubeId: '4_6y0Tc-RMk',
         accent: '#10b981',
         likes: 2847,
         comments: 134,
@@ -36,7 +36,7 @@ const DEMOS: Demo[] = [
         tagline: 'Dials hundreds of leads daily, pitches listings, routes hot buyers straight to your agents.',
         metric: '8×',
         metricLabel: 'more dials / hour',
-        src: '/voice/Demo 2 My Home Real Estate Hindi.mp4',
+        youtubeId: 'TCDNUMABEnI',
         accent: '#f59e0b',
         likes: 1923,
         comments: 89,
@@ -48,70 +48,68 @@ const DEMOS: Demo[] = [
         tagline: 'Scores every inbound lead on budget, timeline and intent before your team ever picks up.',
         metric: '92%',
         metricLabel: 'qualification accuracy',
-        src: '/voice/MHM Priya Lead Qualification Demo.mp4',
+        youtubeId: 'fEMu-T2_1Zw',
         accent: '#fb923c',
         likes: 3241,
         comments: 201,
     },
     {
-        slug: 'customer-service',
-        title: 'Customer Service',
-        industry: 'Support',
-        tagline: 'Resolves tier-1 queries instantly. Escalates only when a human adds real value.',
-        metric: '70%',
-        metricLabel: 'tickets auto-resolved',
-        src: '/voice/demo2.mp4',
-        accent: '#818cf8',
-        likes: 1567,
-        comments: 67,
-    },
-    {
-        slug: 'review-collection',
+        slug: 'urban-klean-feedback',
         title: 'Review Collection',
         industry: 'Feedback',
-        tagline: 'Post-purchase outbound call that captures structured reviews and flags unhappy customers.',
+        tagline: 'Post-service outbound call that captures reviews and flags unhappy customers automatically.',
         metric: '4.7★',
         metricLabel: 'avg rating captured',
-        src: '/voice/demo3.mp4',
+        youtubeId: 'DnXb-gJ4WpE',
         accent: '#60a5fa',
         likes: 2103,
         comments: 112,
     },
 ];
 
+/* Marquee shows all industries including ones without a live reel */
+const MARQUEE_ITEMS = [
+    { industry: 'Hospitality', title: 'Booking Agent' },
+    { industry: 'Real Estate', title: 'Outbound Calling' },
+    { industry: 'Real Estate', title: 'Lead Qualification' },
+    { industry: 'Feedback', title: 'Review Collection' },
+    { industry: 'Healthcare', title: 'Appointment Booking' },
+    { industry: 'Support', title: 'Customer Service' },
+];
+
 const NAVBAR_H = 72;
 
 function ReelCard({ demo, index, isActive }: { demo: Demo; index: number; isActive: boolean }) {
     const { openModal } = useModal();
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const [muted, setMuted] = useState(false);
+    const iframeRef = useRef<HTMLIFrameElement>(null);
+    const [muted, setMuted] = useState(true); // YouTube autoplay requires starting muted
     const [liked, setLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(demo.likes);
     const [showHeart, setShowHeart] = useState(false);
     const lastTap = useRef(0);
 
+    const sendYT = (func: string) => {
+        iframeRef.current?.contentWindow?.postMessage(
+            JSON.stringify({ event: 'command', func, args: '' }), '*'
+        );
+    };
+
     useEffect(() => {
-        const v = videoRef.current;
-        if (!v) return;
         if (isActive) {
-            v.muted = false;
-            const playPromise = v.play();
-            if (playPromise) {
-                playPromise.catch(() => {
-                    v.muted = true;
-                    setMuted(true);
-                    v.play().catch(() => {});
-                });
-            }
+            const t = setTimeout(() => {
+                sendYT('playVideo');
+                if (!muted) sendYT('unMute');
+            }, 400);
+            return () => clearTimeout(t);
         } else {
-            v.pause();
-            v.currentTime = 0;
+            sendYT('pauseVideo');
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isActive]);
 
     useEffect(() => {
-        const v = videoRef.current;
-        if (v) v.muted = muted;
+        sendYT(muted ? 'mute' : 'unMute');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [muted]);
 
     const handleTap = () => {
@@ -140,15 +138,13 @@ function ReelCard({ demo, index, isActive }: { demo: Demo; index: number; isActi
 
     return (
         <div className="ig-reel" onClick={handleTap}>
-            {/* Video */}
-            <video
-                ref={videoRef}
-                className="ig-video"
-                src={demo.src}
-                loop
-                playsInline
-                muted={muted}
-                preload="metadata"
+            {/* YouTube iframe — covers the portrait frame like object-fit:cover */}
+            <iframe
+                ref={iframeRef}
+                className="ig-yt-frame"
+                src={`https://www.youtube.com/embed/${demo.youtubeId}?enablejsapi=1&autoplay=1&mute=1&loop=1&playlist=${demo.youtubeId}&controls=0&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3`}
+                allow="autoplay; encrypted-media"
+                allowFullScreen
             />
 
             {/* Double-tap heart burst */}
@@ -297,21 +293,10 @@ export default function VoicePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [active]);
 
+    /* Add body class so CSS scroll-snap applies only on this page */
     useEffect(() => {
-        const reels = document.getElementById('reels');
-        if (!reels) return;
-        let timer: ReturnType<typeof setTimeout>;
-        const onScroll = () => {
-            clearTimeout(timer);
-            timer = setTimeout(() => {
-                const rect = reels.getBoundingClientRect();
-                if (rect.top > 24 && rect.top < window.innerHeight * 0.75) {
-                    reels.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            }, 80);
-        };
-        window.addEventListener('scroll', onScroll, { passive: true });
-        return () => { window.removeEventListener('scroll', onScroll); clearTimeout(timer); };
+        document.body.classList.add('voice-page');
+        return () => document.body.classList.remove('voice-page');
     }, []);
 
     /* Hide navbar when reels section is in view */
@@ -365,10 +350,9 @@ export default function VoicePage() {
                 <div className="vc-marquee-block">
                     <div className="vc-marquee-row">
                         <div className="vc-marquee-track">
-                            {[...DEMOS, ...DEMOS, ...DEMOS].map((d, i) => (
+                            {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((d, i) => (
                                 <button key={i} className="vc-pill" onClick={() => {
                                     document.getElementById('reels')?.scrollIntoView({ behavior: 'smooth' });
-                                    setTimeout(() => jumpTo(i % DEMOS.length), 500);
                                 }}>
                                     {d.industry} — {d.title}
                                 </button>
@@ -433,6 +417,11 @@ export default function VoicePage() {
                 /* ── NAVBAR HIDE WHEN REELS ACTIVE ── */
                 .navbar { transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease !important; }
                 body.ig-reels-active .navbar { transform: translateY(-100%); opacity: 0; pointer-events: none; }
+
+                /* ── PAGE SCROLL SNAP (voice page only) ── */
+                body.voice-page { scroll-snap-type: y proximity; }
+                body.voice-page .vc-hero { scroll-snap-align: start; scroll-snap-stop: always; }
+                body.voice-page .ig-scene { scroll-snap-align: start; scroll-snap-stop: always; }
 
                 /* ── ROOT ── */
                 .vc-root { background: var(--color-bg); color: var(--color-text); overflow-x: hidden; }
@@ -555,6 +544,7 @@ export default function VoicePage() {
                     scroll-snap-type: y mandatory;
                     scrollbar-width: none;
                     -webkit-overflow-scrolling: touch;
+                    overscroll-behavior-y: contain;
                 }
                 .ig-scroll::-webkit-scrollbar { display: none; }
 
@@ -570,13 +560,16 @@ export default function VoicePage() {
                     cursor: pointer;
                 }
 
-                /* Video covers the frame */
-                .ig-video {
+                /* YouTube iframe — covers the portrait frame (16:9 video in 9:16 frame) */
+                .ig-yt-frame {
                     position: absolute;
-                    inset: 0;
-                    width: 100%;
+                    top: 50%; left: 50%;
+                    transform: translate(-50%, -50%);
                     height: 100%;
-                    object-fit: cover;
+                    aspect-ratio: 16 / 9;
+                    min-width: 100%;
+                    border: none;
+                    pointer-events: none;
                     background: #000;
                 }
 
