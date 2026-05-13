@@ -58,18 +58,6 @@ type Demo = {
 
 const DEMOS: Demo[] = [
     {
-        slug: 'urban-klean-booking',
-        title: 'Booking Agent',
-        industry: 'Hospitality',
-        tagline: 'Handles inbound calls, checks availability, and confirms bookings — 24/7 without staff.',
-        metric: '3×',
-        metricLabel: 'more bookings handled',
-        youtubeId: '4_6y0Tc-RMk',
-        accent: '#10b981',
-        likes: 2847,
-        comments: 134,
-    },
-    {
         slug: 'real-estate-outbound',
         title: 'Real Estate Outbound',
         industry: 'Real Estate',
@@ -80,6 +68,18 @@ const DEMOS: Demo[] = [
         accent: '#f59e0b',
         likes: 1923,
         comments: 89,
+    },
+    {
+        slug: 'urban-klean-booking',
+        title: 'Booking Agent',
+        industry: 'Hospitality',
+        tagline: 'Handles inbound calls, checks availability, and confirms bookings — 24/7 without staff.',
+        metric: '3×',
+        metricLabel: 'more bookings handled',
+        youtubeId: '4_6y0Tc-RMk',
+        accent: '#10b981',
+        likes: 2847,
+        comments: 134,
     },
     {
         slug: 'real-estate-lead-qual',
