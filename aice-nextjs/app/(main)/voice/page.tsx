@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useModal } from '@/components/ModalContext';
 
 type Demo = {
@@ -12,8 +13,6 @@ type Demo = {
     metricLabel: string;
     src: string;
     accent: string;
-    likes: number;
-    comments: number;
 };
 
 const DEMOS: Demo[] = [
@@ -21,53 +20,44 @@ const DEMOS: Demo[] = [
         slug: 'real-estate-outbound',
         title: 'Real Estate Outbound',
         industry: 'Real Estate',
-        tagline: 'Dials hundreds of leads daily, pitches listings, routes hot buyers straight to your agents.',
+        tagline: 'Dials hundreds of leads daily, pitches listings, routes hot buyers to agents.',
         metric: '8×',
-        metricLabel: 'more dials / hour',
+        metricLabel: 'more dials / hr',
         src: '/voice/real-estate-outbound.mp4',
         accent: '#f59e0b',
-        likes: 1923,
-        comments: 89,
     },
     {
         slug: 'real-estate-lead-qual',
         title: 'Lead Qualification',
         industry: 'Real Estate',
-        tagline: 'Scores every inbound lead on budget, timeline and intent before your team ever picks up.',
+        tagline: 'Scores every inbound lead on budget, timeline and intent — before your team picks up.',
         metric: '92%',
         metricLabel: 'qualification accuracy',
         src: '/voice/lead-qualification.mp4',
         accent: '#fb923c',
-        likes: 3241,
-        comments: 201,
     },
     {
         slug: 'urban-klean-feedback',
         title: 'Review Collection',
         industry: 'Feedback',
-        tagline: 'Post-service outbound call that captures reviews and flags unhappy customers automatically.',
+        tagline: 'Post-service call that captures reviews and flags unhappy customers automatically.',
         metric: '4.7★',
         metricLabel: 'avg rating captured',
         src: '/voice/review-collection.mp4',
         accent: '#60a5fa',
-        likes: 2103,
-        comments: 112,
     },
     {
         slug: 'urban-klean-booking',
         title: 'Booking Agent',
         industry: 'Hospitality',
-        tagline: 'Handles inbound calls, checks availability, and confirms bookings — 24/7 without staff.',
+        tagline: 'Handles inbound calls, checks availability, confirms bookings — 24/7 without staff.',
         metric: '3×',
         metricLabel: 'more bookings handled',
         src: '/voice/booking-agent.mp4',
         accent: '#10b981',
-        likes: 2847,
-        comments: 134,
     },
 ];
 
-/* Marquee shows all industries including ones without a live reel */
 const MARQUEE_ITEMS = [
     { industry: 'Hospitality', title: 'Booking Agent' },
     { industry: 'Real Estate', title: 'Outbound Calling' },
@@ -77,519 +67,152 @@ const MARQUEE_ITEMS = [
     { industry: 'Support', title: 'Customer Service' },
 ];
 
-const NAVBAR_H = 72;
+const LOADER_MIN_MS = 350;
 
-function ReelCard({
-    demo,
-    index,
-    isActive,
-    fullscreen,
-    onToggleFullscreen,
-    audioOn,
-    onToggleAudio,
-}: {
-    demo: Demo;
-    index: number;
-    isActive: boolean;
-    fullscreen: boolean;
-    onToggleFullscreen: () => void;
-    audioOn: boolean;
-    onToggleAudio: () => void;
-}) {
+function useCanHover() {
+    return useMemo(
+        () => typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches,
+        []
+    );
+}
+
+function DemoCard({ demo }: { demo: Demo }) {
     const { openModal } = useModal();
     const videoRef = useRef<HTMLVideoElement>(null);
-    const [loaded, setLoaded] = useState(false);
-    // Initialise to isActive so the pause overlay never flashes on the first reel
-    const [playing, setPlaying] = useState(isActive);
-    const [controlsVisible, setControlsVisible] = useState(true);
-    const [liked, setLiked] = useState(false);
-    const [likeCount, setLikeCount] = useState(demo.likes);
-    const [showHeart, setShowHeart] = useState(false);
-    const [showPauseIcon, setShowPauseIcon] = useState<null | 'pause' | 'play'>(null);
-    const [progress, setProgress] = useState(0);
-    const lastTap = useRef(0);
-    const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-    const flashTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    const mountedAt = useRef(0);
+    const [loading, setLoading] = useState(true);
+    const [muted, setMuted] = useState(false); // unmuted by default — voice is the product
+    const [aspectRatio, setAspectRatio] = useState(16 / 9);
+    const canHover = useCanHover();
 
-    const scheduleHide = () => {
-        clearTimeout(hideTimer.current);
-        hideTimer.current = setTimeout(() => setControlsVisible(false), 3000);
-    };
+    useEffect(() => { mountedAt.current = Date.now(); }, []);
 
-    /* Drive play/pause + mute state when this reel becomes active/inactive.
-       attemptPlay() handles the rare case where autoplay was blocked: when
-       muted, every modern browser allows .play() to succeed without a user
-       gesture, so retrying with muted=true always recovers. */
-    useEffect(() => {
+    const hideLoader = useCallback(() => {
+        const elapsed = Date.now() - (mountedAt.current || Date.now());
+        setTimeout(() => setLoading(false), Math.max(0, LOADER_MIN_MS - elapsed));
+    }, []);
+
+    const setVideoRef = useCallback((el: HTMLVideoElement | null) => {
+        videoRef.current = el;
+        if ((el?.readyState ?? 0) >= 2) hideLoader();
+    }, [hideLoader]);
+
+    const play = () => {
         const v = videoRef.current;
         if (!v) return;
-        if (isActive) {
-            v.muted = !audioOn;
-            // Only seek to start when switching reels, not on initial mount
-            // (setting currentTime on an unloaded video can abort the play call)
-            if (v.readyState >= 1) v.currentTime = 0;
-            const p = v.play();
-            if (p && typeof p.catch === 'function') {
-                p.catch(() => {
-                    // Audible autoplay blocked — fall back to muted and retry
-                    v.muted = true;
-                    v.play().catch(() => { /* requires user tap */ });
-                });
-            }
-            setPlaying(true);
-            scheduleHide();
-        } else {
-            v.pause();
+        v.muted = muted;
+        v.play().catch(() => {
+            // Autoplay blocked — retry muted
             v.muted = true;
-            setPlaying(false);
-            setControlsVisible(true);
-            clearTimeout(hideTimer.current);
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isActive]);
-
-    /* React to global audio toggle for the active reel */
-    useEffect(() => {
-        if (!isActive) return;
-        const v = videoRef.current;
-        if (!v) return;
-        v.muted = !audioOn;
-        // If unmuting, the browser may pause if there was no user gesture —
-        // re-issue play.
-        if (audioOn) {
-            const p = v.play();
-            if (p && typeof p.catch === 'function') p.catch(() => { /* noop */ });
-        }
-    }, [audioOn, isActive]);
-
-    /* Cleanup timers on unmount */
-    useEffect(() => () => {
-        clearTimeout(hideTimer.current);
-        clearTimeout(flashTimer.current);
-    }, []);
-
-    /* Sync video element events → React state */
-    useEffect(() => {
-        const v = videoRef.current;
-        if (!v) return;
-        const onTime = () => {
-            if (v.duration > 0) setProgress(Math.min(1, v.currentTime / v.duration));
-        };
-        const markLoaded = () => setLoaded(true);
-        const onPlay = () => setPlaying(true);
-        const onPause = () => { if (isActive) setPlaying(false); };
-        // readyState >= 2 means the browser already has the current frame —
-        // loadeddata already fired before our listener attached, so set immediately.
-        if (v.readyState >= 2) setLoaded(true);
-        v.addEventListener('loadeddata', markLoaded);
-        v.addEventListener('timeupdate', onTime);
-        v.addEventListener('play', onPlay);
-        v.addEventListener('pause', onPause);
-        return () => {
-            v.removeEventListener('loadeddata', markLoaded);
-            v.removeEventListener('timeupdate', onTime);
-            v.removeEventListener('play', onPlay);
-            v.removeEventListener('pause', onPause);
-        };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    const flashIcon = (kind: 'pause' | 'play') => {
-        clearTimeout(flashTimer.current);
-        setShowPauseIcon(kind);
-        flashTimer.current = setTimeout(() => setShowPauseIcon(null), 650);
+            setMuted(true);
+            v.play().catch(() => {});
+        });
     };
 
-    const handleTap = () => {
-        const now = Date.now();
-        if (now - lastTap.current < 280) {
-            /* Double tap — like */
-            if (!liked) {
-                setLiked(true);
-                setLikeCount((c) => c + 1);
-            }
-            setShowHeart(true);
-            setTimeout(() => setShowHeart(false), 900);
-            lastTap.current = 0;
-            return;
-        }
-        lastTap.current = now;
-
-        /* Single tap — if controls hidden, reveal first; else toggle play/pause */
-        if (!controlsVisible) {
-            setControlsVisible(true);
-            scheduleHide();
-            return;
-        }
-        const v = videoRef.current;
-        if (playing) {
-            flashIcon('pause');
-            setPlaying(false);
-            clearTimeout(hideTimer.current);
-            v?.pause();
-        } else {
-            flashIcon('play');
-            setPlaying(true);
-            scheduleHide();
-            const p = v?.play();
-            if (p && typeof p.catch === 'function') p.catch(() => { /* noop */ });
-        }
-    };
-
-    const toggleLike = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (liked) {
-            setLiked(false);
-            setLikeCount((c) => c - 1);
-        } else {
-            setLiked(true);
-            setLikeCount((c) => c + 1);
-        }
-    };
+    const pause = () => videoRef.current?.pause();
 
     return (
-        <div className={`ig-reel ${controlsVisible ? '' : 'ig-controls-hidden'}`} onClick={handleTap}>
-            {/* Native <video>. Only the active reel preloads aggressively;
-                others fetch metadata so they can start fast when scrolled to. */}
-            <video
-                ref={videoRef}
-                className={`ig-video ${loaded ? 'ig-video-loaded' : ''}`}
-                src={demo.src}
-                muted
-                autoPlay={isActive}
-                playsInline
-                loop
-                preload={isActive ? 'auto' : 'metadata'}
-                disablePictureInPicture
-                disableRemotePlayback
-                aria-hidden
-            />
-            {!loaded && <div className="ig-video-skel" aria-hidden />}
+        <article className="demo-card group">
+            {/* Video */}
+            <div
+                className="demo-video-wrap"
+                style={{ aspectRatio }}
+                onMouseEnter={() => { if (canHover) play(); }}
+                onMouseLeave={() => { if (canHover) pause(); }}
+            >
+                <video
+                    ref={setVideoRef}
+                    src={demo.src}
+                    preload="auto"
+                    muted={muted}
+                    playsInline
+                    loop
+                    className="demo-video"
+                    onLoadedMetadata={(e) => {
+                        const v = e.currentTarget;
+                        if (v.videoWidth && v.videoHeight) setAspectRatio(v.videoWidth / v.videoHeight);
+                        if (v.readyState >= 2) hideLoader();
+                    }}
+                    onLoadedData={hideLoader}
+                    onCanPlay={hideLoader}
+                    onError={hideLoader}
+                    aria-hidden
+                />
 
-            {/* Double-tap heart burst */}
-            {showHeart && (
-                <div className="ig-heart-pop" aria-hidden>
-                    <span className="ig-heart-pop-icon">❤️</span>
+                {/* Loader spinner */}
+                {loading && (
+                    <div className="demo-loader" aria-hidden>
+                        <div className="demo-spinner" style={{ borderTopColor: demo.accent }} />
+                    </div>
+                )}
+
+                {/* Hover play hint — fades once playing */}
+                <div className="demo-play-hint" aria-hidden>
+                    <svg viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z" /></svg>
                 </div>
-            )}
 
-            {/* Play/Pause icon flash */}
-            {showPauseIcon && (
-                <div className="ig-playpause-flash" aria-hidden>
-                    {showPauseIcon === 'pause' ? (
-                        <svg viewBox="0 0 24 24" fill="white">
-                            <rect x="6" y="4" width="4" height="16" rx="1" />
-                            <rect x="14" y="4" width="4" height="16" rx="1" />
+                {/* Mute toggle — bottom right */}
+                <button
+                    className="demo-mute-btn"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        const next = !muted;
+                        setMuted(next);
+                        if (videoRef.current) videoRef.current.muted = next;
+                    }}
+                    aria-label={muted ? 'Unmute' : 'Mute'}
+                >
+                    {muted ? (
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                            <line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" />
                         </svg>
                     ) : (
-                        <svg viewBox="0 0 24 24" fill="white">
-                            <path d="M8 5v14l11-7z" />
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                            <path d="M15.54 8.46a5 5 0 0 1 0 7.07" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
                         </svg>
                     )}
-                </div>
-            )}
-
-            {/* Persistent center play button when paused */}
-            {!playing && isActive && !showPauseIcon && (
-                <div className="ig-paused-overlay" aria-hidden>
-                    <svg viewBox="0 0 24 24" fill="white">
-                        <path d="M8 5v14l11-7z" />
-                    </svg>
-                </div>
-            )}
-
-            {/* Bottom gradient — fades when controls hidden */}
-            <div className="ig-gradient" />
-
-            {/* Top bar */}
-            <div className="ig-top">
-                <div className="ig-user-row">
-                    <div className="ig-avatar">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                            <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                            <line x1="12" y1="19" x2="12" y2="23" />
-                            <line x1="8" y1="23" x2="16" y2="23" />
-                        </svg>
-                    </div>
-                    <span className="ig-handle">aice.voice</span>
-                    <span className="ig-industry-tag" style={{ color: demo.accent }}>
-                        {demo.industry}
-                    </span>
-                </div>
-                <div className="ig-top-actions">
-                    <button
-                        className="ig-icon-btn"
-                        onClick={(e) => { e.stopPropagation(); onToggleAudio(); }}
-                        aria-label={audioOn ? 'Mute' : 'Unmute'}
-                    >
-                        {audioOn ? (
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-                            </svg>
-                        ) : (
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                                <line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" />
-                            </svg>
-                        )}
-                    </button>
-                    <button
-                        className="ig-icon-btn"
-                        onClick={(e) => { e.stopPropagation(); onToggleFullscreen(); }}
-                        aria-label={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-                    >
-                        {fullscreen ? (
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M8 3v5H3M16 3v5h5M8 21v-5H3M16 21v-5h5" />
-                            </svg>
-                        ) : (
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M3 8V3h5M21 8V3h-5M3 16v5h5M21 16v5h-5" />
-                            </svg>
-                        )}
-                    </button>
-                </div>
-            </div>
-
-            {/* Right sidebar */}
-            <div className="ig-sidebar">
-                {/* Like */}
-                <button className={`ig-action ${liked ? 'ig-liked' : ''}`} onClick={toggleLike} aria-label="Like">
-                    <svg className="ig-action-icon" viewBox="0 0 24 24" fill={liked ? '#ef4444' : 'none'} stroke={liked ? '#ef4444' : 'white'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                    </svg>
-                    <span className="ig-action-count">{likeCount.toLocaleString()}</span>
                 </button>
 
-                {/* Deploy Agent */}
-                <button className="ig-action" onClick={(e) => { e.stopPropagation(); openModal(); }} aria-label="Deploy Agent">
-                    <svg className="ig-action-icon" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {/* Industry accent tag */}
+                <span className="demo-tag" style={{ color: demo.accent }}>
+                    {demo.industry}
+                </span>
+            </div>
+
+            {/* Card footer */}
+            <div className="demo-footer">
+                <div className="demo-footer-left">
+                    <div className="demo-metric" style={{ color: demo.accent }}>
+                        {demo.metric}
+                        <span className="demo-metric-lbl">{demo.metricLabel}</span>
+                    </div>
+                    <h3 className="demo-title">{demo.title}</h3>
+                    <p className="demo-tagline">{demo.tagline}</p>
+                </div>
+                <button className="demo-deploy-btn" onClick={openModal} aria-label="Deploy agent">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                     </svg>
-                    <span className="ig-action-count">Deploy</span>
-                </button>
-
-                {/* WhatsApp */}
-                <a
-                    className="ig-action"
-                    href="https://wa.me/918956366659?text=Hi%2C%20I%27d%20like%20to%20know%20more%20about%20AICE%20Voice%20Agents"
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    aria-label="WhatsApp"
-                >
-                    <svg className="ig-action-icon" viewBox="0 0 24 24" fill="white">
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-                    </svg>
-                    <span className="ig-action-count">Chat</span>
-                </a>
-
-                {/* Book Demo */}
-                <button className="ig-action" onClick={(e) => { e.stopPropagation(); openModal(); }} aria-label="Book Demo">
-                    <svg className="ig-action-icon" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                        <line x1="16" y1="2" x2="16" y2="6" />
-                        <line x1="8" y1="2" x2="8" y2="6" />
-                        <line x1="3" y1="10" x2="21" y2="10" />
-                    </svg>
-                    <span className="ig-action-count">Book</span>
+                    Deploy
                 </button>
             </div>
-
-            {/* Bottom info — clean, minimal */}
-            <div className="ig-bottom">
-                <div className="ig-metric-display" style={{ color: demo.accent }}>
-                    {demo.metric}
-                    <span className="ig-metric-unit">{demo.metricLabel}</span>
-                </div>
-                <div className="ig-reel-title">{demo.title}</div>
-                <div className="ig-reel-tagline">{demo.tagline}</div>
-                <div className="ig-vinyl-row">
-                    <div className={`ig-vinyl ${audioOn ? '' : 'ig-vinyl-paused'}`}>🎵</div>
-                </div>
-            </div>
-
-            {/* Reel counter */}
-            <div className="ig-counter">{index + 1} / {DEMOS.length}</div>
-
-            {/* Progress bar — always visible, pinned to bottom edge */}
-            <div className="ig-progress">
-                <div
-                    className="ig-progress-fill"
-                    style={{ width: `${progress * 100}%`, background: demo.accent }}
-                />
-            </div>
-        </div>
+        </article>
     );
 }
 
 export default function VoicePage() {
     const { openModal } = useModal();
-    const scrollRef = useRef<HTMLDivElement>(null);
-    const sceneRef = useRef<HTMLDivElement>(null);
-    const [active, setActive] = useState(0);
-    const [fullscreen, setFullscreen] = useState(false);
-    /* Audio is OFF until the user scrolls into the reels section, then ON.
-       Once the user manually mutes, we don't auto-unmute again on this visit. */
-    const [audioOn, setAudioOn] = useState(false);
-    const [inReels, setInReels] = useState(false);
-    const userInteracted = useRef(false);
-    const userOverrode = useRef(false);
-
-    /* Track first user gesture — browsers block audible playback without one */
-    useEffect(() => {
-        const onInteract = () => { userInteracted.current = true; };
-        window.addEventListener('pointerdown', onInteract, { once: true, passive: true });
-        window.addEventListener('keydown', onInteract, { once: true });
-        window.addEventListener('wheel', onInteract, { once: true, passive: true });
-        window.addEventListener('touchstart', onInteract, { once: true, passive: true });
-        return () => {
-            window.removeEventListener('pointerdown', onInteract);
-            window.removeEventListener('keydown', onInteract);
-            window.removeEventListener('wheel', onInteract);
-            window.removeEventListener('touchstart', onInteract);
-        };
-    }, []);
-
-    /* Auto-unmute on entering the reels section, re-mute on exit.
-       If the user manually muted (userOverrode), respect that until they leave. */
-    useEffect(() => {
-        if (inReels) {
-            if (userInteracted.current && !userOverrode.current) {
-                setAudioOn(true);
-            }
-        } else {
-            setAudioOn(false);
-            userOverrode.current = false;
-        }
-    }, [inReels]);
-
-    const toggleAudio = () => {
-        userOverrode.current = true;
-        setAudioOn((a) => !a);
-    };
-
-    useEffect(() => {
-        const el = scrollRef.current;
-        if (!el) return;
-        const onScroll = () => {
-            const h = el.clientHeight;
-            if (!h) return;
-            const idx = Math.round(el.scrollTop / h);
-            setActive(Math.max(0, Math.min(idx, DEMOS.length - 1)));
-        };
-        el.addEventListener('scroll', onScroll, { passive: true });
-        return () => el.removeEventListener('scroll', onScroll);
-    }, []);
-
-    /* Bubble wheel scroll out of the reel viewer when we hit the boundaries
-       (top of first reel scrolling up, bottom of last reel scrolling down). */
-    useEffect(() => {
-        const el = scrollRef.current;
-        if (!el) return;
-        const onWheel = (e: WheelEvent) => {
-            const atTop = el.scrollTop <= 2;
-            const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
-            const goingDown = e.deltaY > 0;
-            const goingUp = e.deltaY < 0;
-            if ((atBottom && goingDown) || (atTop && goingUp)) {
-                if (fullscreen) return; // in fullscreen, no page scroll
-                e.preventDefault();
-                window.scrollBy({ top: e.deltaY * 1.4, behavior: 'auto' });
-            }
-        };
-        el.addEventListener('wheel', onWheel, { passive: false });
-        return () => el.removeEventListener('wheel', onWheel);
-    }, [fullscreen]);
-
-    /* Touch boundary bubble for mobile */
-    useEffect(() => {
-        const el = scrollRef.current;
-        if (!el) return;
-        let startY = 0;
-        const onTouchStart = (e: TouchEvent) => { startY = e.touches[0].clientY; };
-        const onTouchMove = (e: TouchEvent) => {
-            const dy = startY - e.touches[0].clientY;
-            const atTop = el.scrollTop <= 2;
-            const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
-            if (fullscreen) return;
-            if ((atBottom && dy > 0) || (atTop && dy < 0)) {
-                window.scrollBy({ top: dy, behavior: 'auto' });
-                startY = e.touches[0].clientY;
-            }
-        };
-        el.addEventListener('touchstart', onTouchStart, { passive: true });
-        el.addEventListener('touchmove', onTouchMove, { passive: true });
-        return () => {
-            el.removeEventListener('touchstart', onTouchStart);
-            el.removeEventListener('touchmove', onTouchMove);
-        };
-    }, [fullscreen]);
-
-    /* Esc closes fullscreen */
-    useEffect(() => {
-        if (!fullscreen) return;
-        const onKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') setFullscreen(false);
-        };
-        window.addEventListener('keydown', onKey);
-        document.body.classList.add('ig-fs-active');
-        return () => {
-            window.removeEventListener('keydown', onKey);
-            document.body.classList.remove('ig-fs-active');
-        };
-    }, [fullscreen]);
 
     useEffect(() => {
         const obs = new IntersectionObserver(
             (es) => es.forEach((e) => { if (e.isIntersecting) e.target.classList.add('vc-vis'); }),
-            { threshold: 0.12 }
+            { threshold: 0.1 }
         );
         document.querySelectorAll('.vc-rev').forEach((el) => obs.observe(el));
         return () => obs.disconnect();
     }, []);
-
-    useEffect(() => {
-        const onKey = (e: KeyboardEvent) => {
-            if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); jumpTo(Math.min(active + 1, DEMOS.length - 1)); }
-            if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); jumpTo(Math.max(active - 1, 0)); }
-        };
-        window.addEventListener('keydown', onKey);
-        return () => window.removeEventListener('keydown', onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [active]);
-
-    /* Add body class so CSS scroll-snap applies only on this page */
-    useEffect(() => {
-        document.body.classList.add('voice-page');
-        return () => document.body.classList.remove('voice-page');
-    }, []);
-
-    /* Hide navbar + flip audio when the reels section is in view */
-    useEffect(() => {
-        const reels = document.getElementById('reels');
-        if (!reels) return;
-        const obs = new IntersectionObserver(
-            ([entry]) => {
-                document.body.classList.toggle('ig-reels-active', entry.intersectionRatio > 0.2);
-                setInReels(entry.intersectionRatio > 0.6);
-            },
-            { threshold: [0, 0.2, 0.4, 0.6, 0.8, 1] }
-        );
-        obs.observe(reels);
-        return () => {
-            obs.disconnect();
-            document.body.classList.remove('ig-reels-active');
-        };
-    }, []);
-
-    const jumpTo = (i: number) => {
-        const el = scrollRef.current;
-        if (!el) return;
-        el.scrollTo({ top: i * el.clientHeight, behavior: 'smooth' });
-    };
 
     return (
         <main className="vc-root">
@@ -600,29 +223,26 @@ export default function VoicePage() {
                 <div className="vc-hero-inner">
                     <div className="vc-wf-hero">
                         {[50, 70, 40, 90, 60, 100, 45, 80, 55, 75, 35, 85].map((h, i) => (
-                            <span key={i} className="vc-wf-hero-bar" style={{ height: `${h}%`, animationDelay: `${i * 0.1}s` }} />
+                            <span key={i} className="vc-wf-bar" style={{ height: `${h}%`, animationDelay: `${i * 0.1}s` }} />
                         ))}
                     </div>
                     <h1 className="vc-h1">
                         AI Voice Agents<br />
                         <span className="vc-grad">for every industry.</span>
                     </h1>
-                    <p className="vc-sub">
-                        Your customers are calling. <em>Don&apos;t make them wait.</em>
-                    </p>
+                    <p className="vc-sub">Your customers are calling. <em>Don&apos;t make them wait.</em></p>
                     <div className="vc-hero-actions">
                         <button className="btn btn-primary btn-lg" onClick={openModal}>Book a Demo</button>
-                        <button className="btn btn-secondary btn-lg" onClick={() => document.getElementById('reels')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Watch demos ↓</button>
+                        <button className="btn btn-secondary btn-lg" onClick={() => document.getElementById('demos')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+                            Watch demos ↓
+                        </button>
                     </div>
                 </div>
-
                 <div className="vc-marquee-block">
                     <div className="vc-marquee-row">
                         <div className="vc-marquee-track">
                             {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((d, i) => (
-                                <button key={i} className="vc-pill" onClick={() => {
-                                    document.getElementById('reels')?.scrollIntoView({ behavior: 'smooth' });
-                                }}>
+                                <button key={i} className="vc-pill" onClick={() => document.getElementById('demos')?.scrollIntoView({ behavior: 'smooth' })}>
                                     {d.industry} — {d.title}
                                 </button>
                             ))}
@@ -631,50 +251,24 @@ export default function VoicePage() {
                 </div>
             </section>
 
-            {/* ── INSTAGRAM REELS ── */}
-            <div className={`ig-scene ${fullscreen ? 'ig-fullscreen' : ''}`} id="reels" ref={sceneRef}>
-
-                {/* Dot navigation */}
-                <div className="ig-dots">
-                    {DEMOS.map((d, i) => (
-                        <button
-                            key={i}
-                            className={`ig-dot ${active === i ? 'ig-dot-on' : ''}`}
-                            style={{ '--accent': d.accent } as React.CSSProperties}
-                            onClick={() => jumpTo(i)}
-                            aria-label={d.title}
-                        />
-                    ))}
-                </div>
-
-                {/* Scroll hint — only when on first reel */}
-                {active === 0 && (
-                    <div className="ig-scroll-hint" aria-hidden>
-                        <span>Scroll</span>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 5v14M19 12l-7 7-7-7" />
-                        </svg>
+            {/* ── DEMOS ── */}
+            <section className="demos-sec" id="demos">
+                <div className="demos-inner vc-rev">
+                    <div className="demos-head">
+                        <p className="demos-eyebrow">Live demos</p>
+                        <h2 className="demos-h2">
+                            Hear the agent <span className="demos-h2-em">in action</span>
+                        </h2>
+                        <p className="demos-sub">Hover any card to listen. Every demo is a real call scenario.</p>
+                        <Link href="/voice/pricing" className="demos-pricing-link">
+                            Compare costs vs a human team →
+                        </Link>
                     </div>
-                )}
-
-                {/* Portrait frame + scroll */}
-                <div className="ig-portrait-wrap">
-                    <div className="ig-scroll" ref={scrollRef}>
-                        {DEMOS.map((d, i) => (
-                            <ReelCard
-                                key={d.slug}
-                                demo={d}
-                                index={i}
-                                isActive={active === i}
-                                fullscreen={fullscreen}
-                                onToggleFullscreen={() => setFullscreen((f) => !f)}
-                                audioOn={audioOn}
-                                onToggleAudio={toggleAudio}
-                            />
-                        ))}
+                    <div className="demos-grid">
+                        {DEMOS.map((d) => <DemoCard key={d.slug} demo={d} />)}
                     </div>
                 </div>
-            </div>
+            </section>
 
             {/* ── STATS ── */}
             <section className="vc-stats vc-rev">
@@ -685,6 +279,36 @@ export default function VoicePage() {
                             <div className="vc-stat-l">{l}</div>
                         </div>
                     ))}
+                </div>
+            </section>
+
+            {/* ── PRICING TEASER ── */}
+            <section className="pr-teaser vc-rev">
+                <div className="vc-wrap">
+                    <div className="pr-teaser-inner">
+                        <div className="pr-teaser-text">
+                            <h2 className="pr-teaser-h2">Half the cost.<br />Zero missed leads.</h2>
+                            <p className="pr-teaser-sub">See exactly how AICE compares to a 4-person team — with a live calculator built for your numbers.</p>
+                        </div>
+                        <div className="pr-teaser-stats">
+                            {[
+                                { value: '49%', label: 'avg cost reduction' },
+                                { value: '24/7', label: 'vs 5-hr human shift' },
+                                { value: '∞', label: 'concurrent calls' },
+                            ].map((s) => (
+                                <div key={s.value} className="pr-teaser-stat">
+                                    <div className="pr-teaser-stat-v">{s.value}</div>
+                                    <div className="pr-teaser-stat-l">{s.label}</div>
+                                </div>
+                            ))}
+                        </div>
+                        <Link href="/voice/pricing" className="pr-teaser-btn">
+                            Explore Pricing
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M5 12h14M12 5l7 7-7 7" />
+                            </svg>
+                        </Link>
+                    </div>
                 </div>
             </section>
 
@@ -702,534 +326,296 @@ export default function VoicePage() {
             </section>
 
             <style jsx global>{`
-                /* ── NAVBAR HIDE WHEN REELS ACTIVE ── */
-                .navbar { transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease !important; }
-                body.ig-reels-active .navbar { transform: translateY(-100%); opacity: 0; pointer-events: none; }
-
-                /* ── PAGE SCROLL SNAP (voice page only) ── */
-                body.voice-page { scroll-snap-type: y proximity; }
-                body.voice-page .vc-hero { scroll-snap-align: start; scroll-snap-stop: always; }
-                body.voice-page .ig-scene { scroll-snap-align: start; scroll-snap-stop: normal; }
-                body.ig-fs-active.voice-page { scroll-snap-type: none; }
-
-                /* ── ROOT ── */
                 .vc-root { background: var(--color-bg); color: var(--color-text); overflow-x: hidden; }
 
                 /* ── HERO ── */
                 .vc-hero {
-                    position: relative;
-                    min-height: 100vh;
+                    position: relative; min-height: 100vh;
                     display: flex; align-items: center; justify-content: center;
-                    text-align: center;
-                    padding: 130px 24px 160px;
-                    overflow: hidden;
+                    text-align: center; padding: 130px 24px 160px; overflow: hidden;
                 }
                 .vc-hero-bg {
                     position: absolute; inset: 0; z-index: 0;
-                    background:
-                        radial-gradient(70% 60% at 50% 40%, rgba(96,165,250,0.14) 0%, transparent 65%),
-                        linear-gradient(180deg, #F8FBFE 0%, #EBF5FF 100%);
+                    background: radial-gradient(70% 60% at 50% 40%, rgba(96,165,250,0.14) 0%, transparent 65%),
+                                linear-gradient(180deg, #F8FBFE 0%, #EBF5FF 100%);
                 }
                 .vc-hero-inner {
-                    position: relative; z-index: 1;
-                    max-width: 860px; width: 100%;
+                    position: relative; z-index: 1; max-width: 860px; width: 100%;
                     display: flex; flex-direction: column; align-items: center;
                     animation: vcrise 0.9s ease both;
                 }
                 @keyframes vcrise { from{opacity:0;transform:translateY(32px)} to{opacity:1;transform:none} }
-                .vc-wf-hero {
-                    display: flex; align-items: center; gap: 4px;
-                    height: 40px; margin-bottom: 20px;
-                }
-                .vc-wf-hero-bar {
+                .vc-wf-hero { display: flex; align-items: center; gap: 4px; height: 40px; margin-bottom: 20px; }
+                .vc-wf-bar {
                     display: block; width: 4px; border-radius: 4px;
                     background: linear-gradient(180deg, #93c5fd, #3b82f6);
                     animation: vcwfh 1.4s ease-in-out infinite;
                     box-shadow: 0 0 10px rgba(59,130,246,0.4);
                 }
                 @keyframes vcwfh { 0%,100%{transform:scaleY(0.3)} 50%{transform:scaleY(1.1)} }
-                .vc-h1 {
-                    font-size: clamp(40px, 6vw, 76px);
-                    font-weight: 700; letter-spacing: -0.04em; line-height: 1.02;
-                    margin: 0 0 20px;
-                }
+                .vc-h1 { font-size: clamp(40px, 6vw, 76px); font-weight: 700; letter-spacing: -0.04em; line-height: 1.02; margin: 0 0 20px; }
                 .vc-grad {
                     background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 50%, #6366F1 100%);
-                    -webkit-background-clip: text; background-clip: text;
-                    -webkit-text-fill-color: transparent;
+                    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
                 }
-                .vc-sub {
-                    font-size: clamp(20px, 2.8vw, 28px);
-                    color: var(--color-text-secondary);
-                    max-width: 600px; margin: 0 auto 36px;
-                    line-height: 1.45; font-weight: 400; letter-spacing: -0.01em;
-                }
+                .vc-sub { font-size: clamp(20px, 2.8vw, 28px); color: var(--color-text-secondary); max-width: 600px; margin: 0 auto 36px; line-height: 1.45; }
                 .vc-sub em { font-style: italic; color: var(--color-accent-blue); font-weight: 500; }
                 .vc-marquee-block {
-                    position: absolute; bottom: 44px; left: 0; right: 0;
+                    position: absolute; bottom: 44px; left: 0; right: 0; overflow: hidden; padding: 6px 0;
                     mask-image: linear-gradient(90deg, transparent 0%, #000 6%, #000 94%, transparent 100%);
                     -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 6%, #000 94%, transparent 100%);
-                    overflow: hidden;
-                    padding: 6px 0;
                 }
                 .vc-marquee-row { overflow: hidden; }
-                .vc-marquee-track {
-                    display: flex; gap: 10px; width: max-content;
-                    animation: vcmarq 36s linear infinite;
-                }
+                .vc-marquee-track { display: flex; gap: 10px; width: max-content; animation: vcmarq 36s linear infinite; }
                 .vc-marquee-block:hover .vc-marquee-track { animation-play-state: paused; }
                 @keyframes vcmarq { from{transform:translateX(0)} to{transform:translateX(calc(-100% / 3))} }
                 .vc-pill {
-                    display: inline-flex; align-items: center; gap: 8px;
-                    padding: 7px 16px;
-                    background: rgba(59,130,246,0.07);
-                    border: 1px solid rgba(59,130,246,0.18);
-                    border-radius: 9999px;
-                    font-size: 12px; font-weight: 600;
-                    color: rgba(15,23,42,0.6);
-                    letter-spacing: 0.04em; text-transform: uppercase;
-                    cursor: pointer; white-space: nowrap; flex-shrink: 0;
-                    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+                    display: inline-flex; align-items: center; gap: 8px; padding: 7px 16px;
+                    background: rgba(59,130,246,0.07); border: 1px solid rgba(59,130,246,0.18);
+                    border-radius: 9999px; font-size: 12px; font-weight: 600;
+                    color: rgba(15,23,42,0.6); letter-spacing: 0.04em; text-transform: uppercase;
+                    cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: background 0.2s, color 0.2s;
                 }
-                .vc-pill::before {
-                    content: '';
-                    width: 6px; height: 6px; border-radius: 50%;
-                    background: #3b82f6;
-                    opacity: 0.5;
-                    flex-shrink: 0;
-                }
-                .vc-pill:hover {
-                    background: rgba(59,130,246,0.13);
-                    border-color: rgba(59,130,246,0.35);
-                    color: rgba(15,23,42,0.85);
-                }
+                .vc-pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #3b82f6; opacity: 0.5; flex-shrink: 0; }
+                .vc-pill:hover { background: rgba(59,130,246,0.13); color: rgba(15,23,42,0.85); }
                 .vc-hero-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
 
-                /* ── INSTAGRAM SCENE ── */
-                .ig-scene {
-                    height: calc(100vh - ${NAVBAR_H}px);
-                    background: #000;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    position: relative;
-                    overflow: hidden;
+                /* ── DEMOS SECTION ── */
+                .demos-sec {
+                    background: #0c0c10;
+                    padding: 88px 0 100px;
+                }
+                .demos-inner {
+                    max-width: 1500px; margin: 0 auto; padding: 0 32px;
+                }
+                .demos-head { text-align: center; margin-bottom: 56px; }
+                .demos-eyebrow {
+                    font-size: 11px; font-weight: 600; letter-spacing: 0.22em;
+                    text-transform: uppercase; color: rgba(255,255,255,0.35);
+                    margin-bottom: 14px;
+                }
+                .demos-h2 {
+                    font-size: clamp(30px, 5vw, 52px); font-weight: 600;
+                    letter-spacing: -0.03em; line-height: 1.08; color: #fff;
+                    margin: 0 0 14px;
+                }
+                .demos-h2-em {
+                    background: linear-gradient(135deg, #93c5fd, #3b82f6);
+                    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+                }
+                .demos-sub { font-size: 15px; color: rgba(255,255,255,0.38); margin: 0 0 18px; }
+                .demos-pricing-link {
+                    display: inline-flex; align-items: center; gap: 5px;
+                    font-size: 13px; font-weight: 600;
+                    color: rgba(147,197,253,0.7);
+                    text-decoration: none;
+                    border-bottom: 1px solid rgba(147,197,253,0.25);
+                    padding-bottom: 1px;
+                    transition: color 0.2s, border-color 0.2s;
+                }
+                .demos-pricing-link:hover { color: #93c5fd; border-color: rgba(147,197,253,0.55); }
+
+                /* Grid — 2 col desktop, 1 col mobile */
+                .demos-grid {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 24px;
+                    align-items: start;
                 }
 
-                /* Portrait wrapper — 9:16 on desktop, full width on mobile */
-                .ig-portrait-wrap {
-                    position: relative;
-                    height: 100%;
-                    width: min(calc((100vh - ${NAVBAR_H}px) * 9 / 16), 100%);
+                /* ── DEMO CARD ── */
+                .demo-card {
+                    background: #141418;
+                    border: 1px solid rgba(255,255,255,0.07);
+                    border-radius: 20px;
                     overflow: hidden;
-                    border-radius: 0;
+                    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+                }
+                .demo-card:hover {
+                    border-color: rgba(255,255,255,0.14);
+                    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
                 }
 
-                /* Scroll snap container */
-                .ig-scroll {
-                    height: 100%;
+                /* Video wrapper — natural aspect ratio */
+                .demo-video-wrap {
+                    position: relative;
                     width: 100%;
-                    overflow-y: scroll;
-                    scroll-snap-type: y mandatory;
-                    scrollbar-width: none;
-                    -webkit-overflow-scrolling: touch;
-                    overscroll-behavior-y: auto;
-                }
-                .ig-scroll::-webkit-scrollbar { display: none; }
-
-                /* ── FULLSCREEN MODE ── */
-                .ig-scene.ig-fullscreen {
-                    position: fixed;
-                    inset: 0;
-                    height: 100vh;
-                    height: 100svh;
-                    width: 100vw;
-                    z-index: 200;
-                    background: #000;
-                }
-                body.ig-fs-active { overflow: hidden; }
-                .ig-fullscreen .ig-portrait-wrap {
-                    width: 100% !important;
-                    height: 100% !important;
-                    border-radius: 0 !important;
-                    box-shadow: none !important;
-                }
-                .ig-fullscreen .ig-reel { height: 100vh !important; }
-                .ig-fullscreen .ig-video {
-                    object-fit: contain;
-                }
-
-                /* Each reel */
-                .ig-reel {
-                    position: relative;
-                    width: 100%;
-                    height: calc(100vh - ${NAVBAR_H}px);
-                    scroll-snap-align: start;
-                    scroll-snap-stop: always;
                     overflow: hidden;
-                    background: #111;
-                    cursor: pointer;
+                    background: #0a0a0e;
+                    cursor: default;
                 }
-
-                /* Native video element — fills the portrait frame. We use
-                   object-fit: contain so the landscape demo footage shows in
-                   full with dark letterbox bars top/bottom, instead of being
-                   cropped (the demos are screen recordings; cropping loses
-                   essential UI). */
-                .ig-video {
-                    position: absolute;
-                    inset: 0;
+                .demo-video {
+                    display: block;
                     width: 100%;
                     height: 100%;
                     object-fit: cover;
-                    background: #000;
-                    pointer-events: none;
-                    opacity: 0;
-                    transition: opacity 0.25s ease;
+                    transform: scale(1);
+                    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
                 }
-                .ig-video-loaded { opacity: 1; }
+                .demo-card:hover .demo-video { transform: scale(1.025); }
 
-                /* Subtle skeleton shimmer until the first frame is decoded. */
-                .ig-video-skel {
-                    position: absolute;
-                    inset: 0;
-                    background:
-                        radial-gradient(60% 40% at 50% 50%, rgba(255,255,255,0.05) 0%, transparent 70%),
-                        #0a0a0a;
-                    z-index: 1;
-                    pointer-events: none;
-                }
-                .ig-video-skel::after {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.06) 50%, transparent 70%);
-                    animation: ig-shimmer 1.6s linear infinite;
-                }
-                @keyframes ig-shimmer {
-                    0%   { transform: translateX(-100%); }
-                    100% { transform: translateX(100%); }
-                }
-
-                /* Permanent scrim for text readability — never fades */
-                .ig-gradient {
-                    position: absolute; inset: 0;
-                    background: linear-gradient(
-                        180deg,
-                        rgba(0,0,0,0.35) 0%,
-                        rgba(0,0,0,0) 20%,
-                        rgba(0,0,0,0) 40%,
-                        rgba(0,0,0,0.45) 65%,
-                        rgba(0,0,0,0.82) 100%
-                    );
-                    pointer-events: none;
-                    z-index: 1;
-                }
-
-                /* Only the bottom caption + counter auto-hide.
-                   Top bar and sidebar buttons stay visible always. */
-                .ig-bottom, .ig-counter {
-                    transition: opacity 0.5s ease;
-                }
-                .ig-controls-hidden .ig-bottom,
-                .ig-controls-hidden .ig-counter { opacity: 0; pointer-events: none; }
-
-                /* Pause/play center flash — appears instantly */
-                .ig-playpause-flash {
-                    position: absolute; inset: 0;
+                /* Loader */
+                .demo-loader {
+                    position: absolute; inset: 0; z-index: 10;
                     display: flex; align-items: center; justify-content: center;
-                    pointer-events: none; z-index: 20;
+                    background: rgba(10,10,14,0.88); backdrop-filter: blur(4px);
                 }
-                .ig-playpause-flash svg {
-                    background: rgba(0,0,0,0.45);
-                    border-radius: 50%;
-                    padding: 18px;
-                    width: 84px; height: 84px;
-                    animation: flashpop 0.65s ease forwards;
-                }
-                @keyframes flashpop {
-                    0% { opacity: 0; transform: scale(0.55); }
-                    18% { opacity: 1; transform: scale(1.08); }
-                    55% { opacity: 1; transform: scale(1); }
-                    100% { opacity: 0; transform: scale(1.1); }
-                }
-
-                /* Persistent paused state — big play button overlay */
-                .ig-paused-overlay {
-                    position: absolute; inset: 0;
-                    display: flex; align-items: center; justify-content: center;
-                    pointer-events: none; z-index: 15;
-                    animation: fadein 0.25s ease forwards;
-                }
-                .ig-paused-overlay svg {
-                    width: 78px; height: 78px;
-                    background: rgba(0,0,0,0.55);
-                    border-radius: 50%;
-                    padding: 18px;
-                    backdrop-filter: blur(4px);
-                    filter: drop-shadow(0 6px 24px rgba(0,0,0,0.6));
-                }
-                @keyframes fadein { from{opacity:0} to{opacity:1} }
-
-                /* Double-tap heart */
-                .ig-heart-pop {
-                    position: absolute; inset: 0;
-                    display: flex; align-items: center; justify-content: center;
-                    pointer-events: none; z-index: 20;
-                }
-                .ig-heart-pop-icon {
-                    font-size: 90px;
-                    animation: heartpop 0.9s ease forwards;
-                    filter: drop-shadow(0 4px 16px rgba(0,0,0,0.4));
-                }
-                @keyframes heartpop {
-                    0% { transform: scale(0); opacity: 0; }
-                    35% { transform: scale(1.25); opacity: 1; }
-                    65% { transform: scale(1); opacity: 1; }
-                    100% { transform: scale(1.05); opacity: 0; }
-                }
-
-                /* ── TOP BAR ── */
-                .ig-top {
-                    position: absolute; top: 16px; left: 16px; right: 16px;
-                    display: flex; align-items: center; justify-content: space-between;
-                    z-index: 5;
-                }
-                .ig-user-row {
-                    display: flex; align-items: center; gap: 10px;
-                }
-                .ig-avatar {
+                .demo-spinner {
                     width: 36px; height: 36px; border-radius: 50%;
-                    background: linear-gradient(135deg, #405DE6, #833AB4, #E1306C, #FD1D1D, #F77737, #FCAF45);
-                    border: 2px solid rgba(255,255,255,0.9);
+                    border: 2.5px solid rgba(255,255,255,0.12);
+                    border-top-color: #3b82f6;
+                    animation: spin 0.8s linear infinite;
+                }
+                @keyframes spin { to { transform: rotate(360deg); } }
+
+                /* Hover play hint */
+                .demo-play-hint {
+                    position: absolute; inset: 0; z-index: 5;
                     display: flex; align-items: center; justify-content: center;
-                    flex-shrink: 0;
+                    pointer-events: none;
+                    opacity: 1;
+                    transition: opacity 0.3s ease;
                 }
-                .ig-handle {
-                    font-size: 14px; font-weight: 700; color: #fff;
-                    text-shadow: 0 1px 4px rgba(0,0,0,0.6);
-                    letter-spacing: -0.01em;
+                .demo-play-hint svg {
+                    width: 52px; height: 52px;
+                    background: rgba(0,0,0,0.55); border-radius: 50%;
+                    padding: 14px; backdrop-filter: blur(8px);
+                    filter: drop-shadow(0 4px 16px rgba(0,0,0,0.5));
+                    transition: transform 0.25s ease, opacity 0.25s ease;
                 }
-                .ig-follow-btn {
-                    padding: 5px 14px;
-                    border: 1.5px solid rgba(255,255,255,0.85);
-                    border-radius: 8px;
-                    background: transparent;
-                    color: #fff;
-                    font-size: 13px; font-weight: 600;
-                    cursor: pointer;
-                    transition: background 0.2s;
+                .demo-card:hover .demo-play-hint { opacity: 0; }
+
+                /* Mute button */
+                .demo-mute-btn {
+                    position: absolute; bottom: 12px; right: 12px; z-index: 8;
+                    width: 34px; height: 34px; border-radius: 50%;
+                    background: rgba(0,0,0,0.65); backdrop-filter: blur(8px);
+                    border: 1px solid rgba(255,255,255,0.15);
+                    color: rgba(255,255,255,0.8);
+                    display: flex; align-items: center; justify-content: center;
+                    cursor: pointer; transition: background 0.2s, border-color 0.2s, color 0.2s;
+                    opacity: 0;
+                    transition: opacity 0.25s ease, background 0.2s, color 0.2s;
+                }
+                .demo-card:hover .demo-mute-btn { opacity: 1; }
+                .demo-mute-btn:hover { background: rgba(0,0,0,0.88); color: #fff; border-color: rgba(255,255,255,0.3); }
+
+                /* Industry tag */
+                .demo-tag {
+                    position: absolute; top: 14px; left: 14px; z-index: 6;
+                    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em;
+                    background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+                    padding: 4px 10px; border-radius: 9999px;
+                    border: 1px solid rgba(255,255,255,0.1);
+                }
+
+                /* Card footer */
+                .demo-footer {
+                    padding: 18px 20px 20px;
+                    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+                }
+                .demo-footer-left { flex: 1; min-width: 0; }
+                .demo-metric {
+                    font-size: 32px; font-weight: 700; letter-spacing: -0.04em; line-height: 1;
+                    display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px;
+                }
+                .demo-metric-lbl {
+                    font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.45);
+                    letter-spacing: 0.08em; text-transform: uppercase;
+                }
+                .demo-title {
+                    font-size: 15px; font-weight: 600; color: #fff;
+                    margin: 0 0 4px; letter-spacing: -0.01em;
+                }
+                .demo-tagline {
+                    font-size: 12.5px; color: rgba(255,255,255,0.38);
+                    line-height: 1.5; margin: 0;
+                    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+                }
+                .demo-deploy-btn {
+                    flex-shrink: 0; align-self: center;
+                    display: inline-flex; align-items: center; gap: 6px;
+                    padding: 8px 14px;
+                    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+                    border-radius: 10px; color: rgba(255,255,255,0.7);
+                    font-size: 12px; font-weight: 600; cursor: pointer;
+                    transition: background 0.2s, border-color 0.2s, color 0.2s;
                     white-space: nowrap;
                 }
-                .ig-follow-btn:hover { background: rgba(255,255,255,0.15); }
-                .ig-top-actions { display: flex; gap: 8px; align-items: center; }
-                .ig-icon-btn {
-                    width: 36px; height: 36px; border-radius: 50%;
-                    background: rgba(0,0,0,0.55);
-                    backdrop-filter: blur(8px);
-                    border: 1px solid rgba(255,255,255,0.2);
-                    color: #fff;
-                    display: flex; align-items: center; justify-content: center;
-                    cursor: pointer;
-                    transition: background 0.2s, transform 0.15s ease;
-                    flex-shrink: 0;
-                }
-                .ig-icon-btn:hover { background: rgba(0,0,0,0.78); transform: scale(1.07); }
-                .ig-icon-btn:active { transform: scale(0.94); }
-
-                /* ── RIGHT SIDEBAR ── */
-                .ig-sidebar {
-                    position: absolute;
-                    right: 14px;
-                    bottom: 140px;
-                    z-index: 5;
-                    display: flex; flex-direction: column; align-items: center; gap: 20px;
-                }
-                .ig-action {
-                    display: flex; flex-direction: column; align-items: center; gap: 5px;
-                    background: none; border: none; color: #fff;
-                    cursor: pointer; padding: 0;
-                    transition: transform 0.15s ease;
-                }
-                .ig-action:hover { transform: scale(1.1); }
-                .ig-action.ig-liked { animation: likedpulse 0.35s ease; }
-                @keyframes likedpulse {
-                    0%   { transform: scale(1); }
-                    50%  { transform: scale(1.3); }
-                    100% { transform: scale(1); }
-                }
-                .ig-action-icon {
-                    width: 28px; height: 28px;
-                    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.7));
-                }
-                .ig-action-count {
-                    font-size: 12px; font-weight: 600; color: #fff;
-                    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
-                    letter-spacing: 0.01em;
-                }
-
-                /* ── TOP industry tag ── */
-                .ig-industry-tag {
-                    font-size: 11px; font-weight: 700;
-                    text-transform: uppercase; letter-spacing: 0.12em;
-                    text-shadow: 0 1px 4px rgba(0,0,0,0.6);
-                }
-
-                /* ── BOTTOM INFO ── */
-                .ig-bottom {
-                    position: absolute;
-                    bottom: 0; left: 0; right: 76px;
-                    padding: 0 18px 28px;
-                    z-index: 5;
-                }
-                .ig-metric-display {
-                    font-size: clamp(44px, 10vw, 72px);
-                    font-weight: 800;
-                    letter-spacing: -0.04em;
-                    line-height: 1;
-                    display: flex; align-items: baseline; gap: 10px;
-                    margin-bottom: 6px;
-                    filter: drop-shadow(0 2px 12px rgba(0,0,0,0.5));
-                }
-                .ig-metric-unit {
-                    font-size: 13px; font-weight: 500;
-                    color: rgba(255,255,255,0.65);
-                    letter-spacing: 0.04em;
-                    text-transform: uppercase;
-                }
-                .ig-reel-title {
-                    font-size: 17px; font-weight: 700; color: #fff;
-                    letter-spacing: -0.01em; line-height: 1.2;
-                    margin-bottom: 4px;
-                    text-shadow: 0 1px 6px rgba(0,0,0,0.5);
-                }
-                .ig-reel-tagline {
-                    font-size: 13px; color: rgba(255,255,255,0.6);
-                    line-height: 1.4;
-                    display: -webkit-box;
-                    -webkit-line-clamp: 2;
-                    -webkit-box-orient: vertical;
-                    overflow: hidden;
-                    margin-bottom: 12px;
-                }
-                .ig-vinyl-row { display: flex; align-items: center; }
-                .ig-vinyl {
-                    width: 28px; height: 28px; border-radius: 50%;
-                    background: linear-gradient(135deg, #1a1a1a, #444);
-                    border: 2px solid rgba(255,255,255,0.2);
-                    display: flex; align-items: center; justify-content: center;
-                    font-size: 12px; flex-shrink: 0;
-                    animation: vinylspin 4s linear infinite;
-                }
-                .ig-vinyl.ig-vinyl-paused { animation-play-state: paused; }
-                @keyframes vinylspin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-
-                /* Progress bar — pinned to the bottom edge, always visible */
-                .ig-progress {
-                    position: absolute;
-                    left: 0; right: 0; bottom: 0;
-                    height: 3px;
-                    background: rgba(255,255,255,0.18);
-                    z-index: 25;
-                    pointer-events: none;
-                    overflow: hidden;
-                }
-                .ig-progress-fill {
-                    height: 100%;
-                    width: 0%;
-                    background: #fff;
-                    transition: width 0.35s linear;
-                    box-shadow: 0 0 8px currentColor;
-                }
-                .ig-controls-hidden .ig-progress { background: rgba(255,255,255,0.12); }
-
-                /* Reel counter */
-                .ig-counter {
-                    position: absolute; top: 16px; right: 16px;
-                    font-size: 12px; font-weight: 500;
-                    color: rgba(255,255,255,0.4);
-                    letter-spacing: 0.04em;
-                    z-index: 5;
-                }
-
-                /* Scroll hint on first reel */
-                .ig-scroll-hint {
-                    position: absolute;
-                    bottom: 18px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    display: flex; flex-direction: column; align-items: center; gap: 3px;
-                    color: rgba(255,255,255,0.55);
-                    font-size: 10px; font-weight: 600;
-                    letter-spacing: 0.18em; text-transform: uppercase;
-                    pointer-events: none;
-                    z-index: 30;
-                    animation: hintBob 1.8s ease-in-out infinite;
-                    text-shadow: 0 1px 6px rgba(0,0,0,0.5);
-                }
-                .ig-fullscreen .ig-scroll-hint { display: none; }
-                @keyframes hintBob {
-                    0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.55; }
-                    50%      { transform: translateX(-50%) translateY(6px); opacity: 0.9; }
-                }
-
-                /* Dot navigation */
-                .ig-dots {
-                    position: absolute;
-                    left: 16px; top: 50%;
-                    transform: translateY(-50%);
-                    z-index: 20;
-                    display: flex; flex-direction: column; gap: 8px;
-                }
-                .ig-dot {
-                    width: 6px; height: 6px; border-radius: 50%;
-                    border: none; padding: 0; cursor: pointer;
-                    background: rgba(255,255,255,0.3);
-                    transition: all 0.3s ease;
-                }
-                .ig-dot-on {
-                    background: var(--accent);
-                    width: 8px; height: 8px;
-                    box-shadow: 0 0 8px var(--accent);
-                }
+                .demo-deploy-btn:hover { background: rgba(59,130,246,0.15); border-color: rgba(59,130,246,0.4); color: #93c5fd; }
 
                 /* ── STATS ── */
+                .vc-wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
                 .vc-stats {
                     padding: 60px 0;
                     background: var(--color-bg-alt);
                     border-top: 1px solid var(--color-gray-200);
                     border-bottom: 1px solid var(--color-gray-200);
                 }
-                .vc-wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
                 .vc-stats .vc-wrap { display: grid; grid-template-columns: repeat(4,1fr); gap: 24px; }
                 .vc-stat { text-align: center; }
                 .vc-stat-n {
                     font-size: clamp(32px,4.5vw,52px); font-weight: 700;
                     background: linear-gradient(135deg, #3B82F6, #1E40AF);
-                    -webkit-background-clip: text; background-clip: text;
-                    -webkit-text-fill-color: transparent;
+                    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
                     letter-spacing: -0.03em; line-height: 1;
                 }
-                .vc-stat-l {
-                    font-size: 12px; color: var(--color-text-muted);
-                    margin-top: 8px; text-transform: uppercase;
-                    letter-spacing: 0.09em; font-weight: 600;
+                .vc-stat-l { font-size: 12px; color: var(--color-text-muted); margin-top: 8px; text-transform: uppercase; letter-spacing: 0.09em; font-weight: 600; }
+
+                /* ── PRICING TEASER ── */
+                .pr-teaser { padding: 100px 0; background: var(--color-bg); }
+                .pr-teaser-inner {
+                    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #312e81 100%);
+                    border-radius: 28px;
+                    padding: 64px 56px;
+                    display: grid;
+                    grid-template-columns: 1fr auto auto;
+                    align-items: center;
+                    gap: 48px;
+                    box-shadow: 0 40px 100px rgba(30,64,175,0.25);
+                    position: relative;
+                    overflow: hidden;
                 }
+                .pr-teaser-inner::before {
+                    content: '';
+                    position: absolute; top: -60px; right: 200px;
+                    width: 280px; height: 280px;
+                    background: radial-gradient(circle, rgba(99,102,241,0.4) 0%, transparent 70%);
+                    pointer-events: none;
+                }
+                .pr-teaser-h2 { font-size: clamp(28px,4vw,44px); font-weight: 700; letter-spacing: -0.03em; color: #fff; line-height: 1.1; margin: 0 0 12px; }
+                .pr-teaser-sub { font-size: 15px; color: rgba(255,255,255,0.55); line-height: 1.6; margin: 0; max-width: 320px; }
+                .pr-teaser-stats {
+                    display: flex; flex-direction: column; gap: 20px;
+                    padding: 0 36px;
+                    border-left: 1px solid rgba(255,255,255,0.12);
+                    border-right: 1px solid rgba(255,255,255,0.12);
+                }
+                .pr-teaser-stat { text-align: center; }
+                .pr-teaser-stat-v {
+                    font-size: 26px; font-weight: 700; letter-spacing: -0.03em;
+                    color: #fff; line-height: 1;
+                }
+                .pr-teaser-stat-l { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+                .pr-teaser-btn {
+                    display: inline-flex; align-items: center; gap: 8px;
+                    padding: 14px 28px;
+                    background: #fff; color: #0f172a;
+                    border-radius: 12px; font-size: 15px; font-weight: 700;
+                    text-decoration: none; white-space: nowrap;
+                    transition: background 0.2s, transform 0.15s;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+                }
+                .pr-teaser-btn:hover { background: #f0f4ff; transform: translateY(-1px); }
 
                 /* ── CTA ── */
                 .vc-cta-sec { padding: 100px 0; }
                 .vc-cta {
-                    background:
-                        radial-gradient(55% 70% at 65% 15%, rgba(99,102,241,0.55) 0%, transparent 55%),
-                        linear-gradient(135deg, #0f172a, #1E40AF);
-                    text-align: center; padding: 80px 32px;
-                    border-radius: 28px;
+                    background: radial-gradient(55% 70% at 65% 15%, rgba(99,102,241,0.55) 0%, transparent 55%), linear-gradient(135deg, #0f172a, #1E40AF);
+                    text-align: center; padding: 80px 32px; border-radius: 28px;
                     box-shadow: 0 40px 100px rgba(30,64,175,0.28);
                 }
-                .vc-cta h2 {
-                    font-size: clamp(32px,5vw,56px); font-weight: 700;
-                    letter-spacing: -0.03em; color: #fff; line-height: 1.05; margin: 0 0 32px;
-                }
+                .vc-cta h2 { font-size: clamp(32px,5vw,56px); font-weight: 700; letter-spacing: -0.03em; color: #fff; line-height: 1.05; margin: 0 0 32px; }
                 .vc-cta-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
                 /* ── REVEAL ── */
@@ -1237,82 +623,29 @@ export default function VoicePage() {
                 .vc-vis { opacity: 1; transform: none; }
 
                 /* ── RESPONSIVE ── */
-                @media (max-width: 900px) {
-                    .ig-portrait-wrap { width: 100%; border-radius: 0; }
-                    .ig-dots { left: 8px; }
-                }
-
                 @media (max-width: 768px) {
-                    /* Hero */
                     .vc-hero { padding: 110px 20px 140px; min-height: 100svh; }
-                    .vc-h1 { font-size: clamp(36px, 10vw, 56px); margin-bottom: 16px; }
+                    .vc-h1 { font-size: clamp(36px, 10vw, 56px); }
                     .vc-sub { font-size: 17px; margin-bottom: 28px; }
                     .vc-hero-actions { flex-direction: column; align-items: stretch; }
-                    .vc-marquee-block { bottom: 40px; }
-
-                    /* Scene */
-                    .ig-scene { height: calc(100svh - 64px); }
-                    .ig-reel { height: calc(100svh - 64px); }
-                    .ig-portrait-wrap { height: calc(100svh - 64px); }
-                    .ig-fullscreen .ig-reel { height: 100svh !important; }
-
-                    /* Bottom info — make room for sidebar + progress bar */
-                    .ig-bottom { right: 64px; padding: 0 14px 22px; }
-                    .ig-sidebar { right: 8px; bottom: 96px; gap: 14px; }
-                    .ig-metric-display { font-size: clamp(36px, 12vw, 56px); margin-bottom: 4px; }
-                    .ig-reel-tagline { font-size: 12px; margin-bottom: 10px; }
-                    .ig-action-icon { width: 26px; height: 26px; }
-
-                    /* Top — compact, prevent overflow on narrow phones */
-                    .ig-top { top: 12px; left: 12px; right: 12px; gap: 8px; }
-                    .ig-user-row { gap: 8px; min-width: 0; flex: 1; }
-                    .ig-avatar { width: 32px; height: 32px; }
-                    .ig-handle {
-                        font-size: 13px;
-                        max-width: 110px;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                        white-space: nowrap;
-                    }
-                    .ig-industry-tag {
-                        font-size: 10px;
-                        letter-spacing: 0.08em;
-                        white-space: nowrap;
-                    }
-                    .ig-top-actions { gap: 6px; flex-shrink: 0; }
-                    .ig-icon-btn { width: 32px; height: 32px; }
-                    .ig-follow-btn { font-size: 12px; padding: 4px 10px; }
-
-                    /* Counter */
-                    .ig-counter { top: 58px; right: 14px; font-size: 11px; }
-
-                    /* Progress bar — slightly thicker on mobile for visibility */
-                    .ig-progress { height: 4px; }
-
-                    /* Scroll hint — hide on mobile, users intuit reels */
-                    .ig-scroll-hint { display: none; }
-
-                    /* Paused overlay — slightly smaller on mobile */
-                    .ig-paused-overlay svg { width: 68px; height: 68px; padding: 15px; }
-                    .ig-playpause-flash svg { width: 72px; height: 72px; padding: 15px; }
-
-                    /* Dots — tighter on mobile */
-                    .ig-dots { left: 6px; gap: 6px; }
-
-                    /* Stats */
+                    .demos-sec { padding: 64px 0 72px; }
+                    .demos-inner { padding: 0 16px; }
+                    .demos-head { margin-bottom: 36px; }
+                    .demos-grid { grid-template-columns: 1fr; gap: 14px; }
+                    .demo-footer { padding: 14px 16px 16px; }
+                    .demo-metric { font-size: 26px; }
+                    .demo-mute-btn { opacity: 1; }
                     .vc-stats .vc-wrap { grid-template-columns: repeat(2,1fr); gap: 32px; }
                     .vc-stats { padding: 48px 0; }
-
-                    /* CTA */
+                    .pr-teaser { padding: 60px 0; }
+                    .pr-teaser-inner { grid-template-columns: 1fr; padding: 36px 28px; gap: 28px; }
+                    .pr-teaser-inner::before { display: none; }
+                    .pr-teaser-stats { flex-direction: row; justify-content: center; padding: 20px 0; border-left: none; border-right: none; border-top: 1px solid rgba(255,255,255,0.12); border-bottom: 1px solid rgba(255,255,255,0.12); }
+                    .pr-teaser-btn { align-self: flex-start; }
                     .vc-cta { padding: 48px 20px; }
                     .vc-cta-btns { flex-direction: column; align-items: stretch; }
                     .vc-cta-sec { padding: 60px 0; }
                     .vc-wrap { padding: 0 16px; }
-                }
-
-                /* Desktop: slight rounded frame for the portrait */
-                @media (min-width: 901px) {
-                    .ig-portrait-wrap { border-radius: 12px; box-shadow: 0 0 80px rgba(0,0,0,0.6); }
                 }
             `}</style>
         </main>
